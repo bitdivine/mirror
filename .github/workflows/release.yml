@@ -2,6 +2,8 @@ name: Build cross-platform app
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 jobs:
