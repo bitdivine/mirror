@@ -75,6 +75,10 @@ run = "dart format --set-exit-if-changed ."
 description = "Run Flutter tests."
 run = "flutter test"
 
+[tasks.linux]
+description = "Launch the Linux app with verbose Flutter logs in log.txt."
+run = "bash -o pipefail -c 'flutter run -d linux -v 2>&1 | tee log.txt'"
+
 [tasks.gui]
 description = "Launch the app on an available Flutter target."
 run = "CC=clang CXX=clang flutter run"

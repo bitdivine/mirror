@@ -57,10 +57,10 @@ Then run the test suite:
 mise run test
 ```
 
-Launch the app on an available Flutter target:
+Launch the Linux app with verbose logs written to `log.txt`:
 
 ```sh
-flutter run
+mise run linux
 ```
 
 ## Debian Package
