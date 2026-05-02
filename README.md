@@ -1,8 +1,8 @@
 # mirror
 
-Minimal Flutter implementation of the cross-platform app feature.
+Complete Flutter implementation of the Mirror spec.
 
-The app renders visible placeholder content:
+The current app renders visible placeholder content:
 
 ```text
 Hello world
