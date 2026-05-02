@@ -36,11 +36,14 @@ The install task configures this clone to use the committed hooks in `.githooks`
 The pre-push hook runs the test suite before Git allows a push.
 
 On Debian-family systems, install the host development packages needed for
-Linux app builds and Debian package builds:
+Linux app builds and Debian package builds from the Debian package metadata:
 
 ```sh
-sudo apt install clang cmake desktop-file-utils dpkg-dev libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev ninja-build pkg-config
+mise run install-apt-dev-deps
 ```
+
+The apt development dependency list comes from `Build-Depends` in
+`debian/control`.
 
 Check that Flutter can see the required platform tooling:
 

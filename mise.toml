@@ -15,6 +15,10 @@ run = [
 description = "Install committed Git hooks."
 run = "tools/install-git-hooks"
 
+[tasks.install-apt-dev-deps]
+description = "Install Debian build dependencies from debian/control."
+run = "sudo apt-get update && sudo apt-get --yes build-dep ."
+
 [tasks.fmt]
 description = "Check Dart formatting."
 run = "dart format --set-exit-if-changed ."
