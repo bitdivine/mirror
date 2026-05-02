@@ -18,13 +18,28 @@ The feature target list is Unix, macOS, Windows, iPhone, and Android. In Flutter
 - iPhone is represented by the Flutter iOS target.
 - Android is represented by the Flutter Android target.
 
-## Local Development
+## Getting Started
 
-Install Flutter, then run:
+Install Flutter by following the official installation guide:
+
+https://docs.flutter.dev/get-started/install
+
+From the repository root, check that Flutter can see the required platform tooling:
+
+```sh
+flutter doctor
+```
+
+Then fetch dependencies and run the test suite:
 
 ```sh
 flutter pub get
 flutter test
+```
+
+Launch the app on an available Flutter target:
+
+```sh
 flutter run
 ```
 
