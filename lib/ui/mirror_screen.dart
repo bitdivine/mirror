@@ -55,13 +55,13 @@ class _MirrorScreenState extends State<MirrorScreen>
     }
   }
 
-  Future<void> _startCamera() async {
+  Future<void> _startCamera({String? cameraId}) async {
     widget.diagnostics.logCameraPhase('screen-start');
     setState(() {
       _cameraState = const MirrorCameraState.starting();
     });
 
-    final nextState = await widget.cameraService.start();
+    final nextState = await widget.cameraService.start(cameraId: cameraId);
     if (!mounted) {
       return;
     }
@@ -85,7 +85,14 @@ class _MirrorScreenState extends State<MirrorScreen>
         if (controller == null) {
           return _buildFailure();
         }
-        return MirroredCameraPreview(controller: controller);
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            MirroredCameraPreview(controller: controller),
+            if (_cameraState.cameras.length > 1)
+              _buildCameraSelector(_cameraState),
+          ],
+        );
       case MirrorCameraStatus.permissionDenied:
         return const Center(
           child: Text('Camera access is required to use the mirror.'),
@@ -111,6 +118,48 @@ class _MirrorScreenState extends State<MirrorScreen>
             child: const Text('Retry'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCameraSelector(MirrorCameraState state) {
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButton<String>(
+                key: const ValueKey('camera-selector'),
+                dropdownColor: Colors.black87,
+                value: state.selectedCameraId,
+                iconEnabledColor: Colors.white,
+                style: const TextStyle(color: Colors.white),
+                underline: const SizedBox.shrink(),
+                items: [
+                  for (final camera in state.cameras)
+                    DropdownMenuItem(
+                      value: camera.id,
+                      child: Text(camera.label),
+                    ),
+                ],
+                onChanged: (cameraId) {
+                  if (cameraId == null ||
+                      cameraId == state.selectedCameraId) {
+                    return;
+                  }
+                  _startCamera(cameraId: cameraId);
+                },
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

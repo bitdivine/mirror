@@ -6,9 +6,16 @@ import 'package:mirror/diagnostics.dart';
 import 'package:mirror/ui/mirrored_camera_preview.dart';
 
 void main() {
+  const frontCamera = MirrorCameraOption(id: 'front', label: 'Front camera');
+  const backCamera = MirrorCameraOption(id: 'back', label: 'Back camera');
+
   testWidgets('renders mirrored preview when camera is ready', (tester) async {
     final cameraService = FakeCameraService(
-      const MirrorCameraState.ready(FakeMirrorCameraController()),
+      const MirrorCameraState.ready(
+        FakeMirrorCameraController(),
+        selectedCameraId: 'front',
+        cameras: [frontCamera],
+      ),
     );
 
     await tester.pumpWidget(
@@ -79,6 +86,55 @@ void main() {
     expect(cameraService.startCalls, 2);
   });
 
+  testWidgets('shows camera selector when multiple cameras are available',
+      (tester) async {
+    final cameraService = FakeCameraService(
+      const MirrorCameraState.ready(
+        FakeMirrorCameraController(),
+        selectedCameraId: 'front',
+        cameras: [frontCamera, backCamera],
+      ),
+    );
+
+    await tester.pumpWidget(
+      MirrorApp(
+        cameraService: cameraService,
+        diagnostics: const Diagnostics(appVersion: 'test'),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('camera-selector')), findsOneWidget);
+    expect(find.text('Front camera'), findsOneWidget);
+  });
+
+  testWidgets('changing selected camera restarts selected camera',
+      (tester) async {
+    final cameraService = FakeCameraService(
+      const MirrorCameraState.ready(
+        FakeMirrorCameraController(),
+        selectedCameraId: 'front',
+        cameras: [frontCamera, backCamera],
+      ),
+    );
+
+    await tester.pumpWidget(
+      MirrorApp(
+        cameraService: cameraService,
+        diagnostics: const Diagnostics(appVersion: 'test'),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('camera-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Back camera').last);
+    await tester.pump();
+
+    expect(cameraService.startCalls, 2);
+    expect(cameraService.selectedCameraIds.last, 'back');
+  });
+
   testWidgets('mirrored preview applies horizontal transform', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -99,10 +155,12 @@ class FakeCameraService implements CameraService {
   final MirrorCameraState state;
   int startCalls = 0;
   int stopCalls = 0;
+  final List<String?> selectedCameraIds = [];
 
   @override
-  Future<MirrorCameraState> start() async {
+  Future<MirrorCameraState> start({String? cameraId}) async {
     startCalls += 1;
+    selectedCameraIds.add(cameraId);
     return state;
   }
 

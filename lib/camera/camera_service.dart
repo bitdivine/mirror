@@ -21,18 +21,38 @@ abstract class MirrorCameraController {
   Future<void> dispose();
 }
 
+class MirrorCameraOption {
+  const MirrorCameraOption({
+    required this.id,
+    required this.label,
+  });
+
+  final String id;
+  final String label;
+}
+
 class MirrorCameraState {
   const MirrorCameraState._({
     required this.status,
     this.controller,
+    this.selectedCameraId,
+    this.cameras = const [],
     this.error,
   });
 
   const MirrorCameraState.starting()
       : this._(status: MirrorCameraStatus.starting);
 
-  const MirrorCameraState.ready(MirrorCameraController controller)
-      : this._(status: MirrorCameraStatus.ready, controller: controller);
+  const MirrorCameraState.ready(
+    MirrorCameraController controller, {
+    required String selectedCameraId,
+    required List<MirrorCameraOption> cameras,
+  }) : this._(
+          status: MirrorCameraStatus.ready,
+          controller: controller,
+          selectedCameraId: selectedCameraId,
+          cameras: cameras,
+        );
 
   const MirrorCameraState.permissionDenied()
       : this._(status: MirrorCameraStatus.permissionDenied);
@@ -45,11 +65,13 @@ class MirrorCameraState {
 
   final MirrorCameraStatus status;
   final MirrorCameraController? controller;
+  final String? selectedCameraId;
+  final List<MirrorCameraOption> cameras;
   final Object? error;
 }
 
 abstract class CameraService {
-  Future<MirrorCameraState> start();
+  Future<MirrorCameraState> start({String? cameraId});
 
   Future<void> stop();
 }
@@ -61,7 +83,7 @@ class FlutterCameraService implements CameraService {
   CameraControllerAdapter? _activeController;
 
   @override
-  Future<MirrorCameraState> start() async {
+  Future<MirrorCameraState> start({String? cameraId}) async {
     diagnostics.logCameraPhase('start-requested');
     await stop();
 
@@ -72,7 +94,7 @@ class FlutterCameraService implements CameraService {
         return const MirrorCameraState.cameraUnavailable();
       }
 
-      final selectedCamera = _selectCamera(cameras);
+      final selectedCamera = _selectCamera(cameras, cameraId);
       final controller = CameraController(
         selectedCamera,
         ResolutionPreset.high,
@@ -82,7 +104,11 @@ class FlutterCameraService implements CameraService {
       await controller.initialize();
       _activeController = CameraControllerAdapter(controller);
       diagnostics.logCameraPhase('ready');
-      return MirrorCameraState.ready(_activeController!);
+      return MirrorCameraState.ready(
+        _activeController!,
+        selectedCameraId: selectedCamera.name,
+        cameras: cameras.map(_toCameraOption).toList(growable: false),
+      );
     } on CameraException catch (error, stackTrace) {
       final category = _cameraExceptionCategory(error);
       diagnostics.logCameraError(category, error, stackTrace);
@@ -108,13 +134,42 @@ class FlutterCameraService implements CameraService {
     await controller.dispose();
   }
 
-  CameraDescription _selectCamera(List<CameraDescription> cameras) {
+  CameraDescription _selectCamera(
+    List<CameraDescription> cameras,
+    String? cameraId,
+  ) {
+    if (cameraId != null) {
+      for (final camera in cameras) {
+        if (camera.name == cameraId) {
+          return camera;
+        }
+      }
+    }
+
     for (final camera in cameras) {
       if (camera.lensDirection == CameraLensDirection.front) {
         return camera;
       }
     }
     return cameras.first;
+  }
+
+  MirrorCameraOption _toCameraOption(CameraDescription camera) {
+    return MirrorCameraOption(
+      id: camera.name,
+      label: '${_cameraDirectionLabel(camera)} camera (${camera.name})',
+    );
+  }
+
+  String _cameraDirectionLabel(CameraDescription camera) {
+    switch (camera.lensDirection) {
+      case CameraLensDirection.front:
+        return 'Front';
+      case CameraLensDirection.back:
+        return 'Back';
+      case CameraLensDirection.external:
+        return 'External';
+    }
   }
 
   String _cameraExceptionCategory(CameraException error) {
