@@ -1,4 +1,4 @@
-# mirror
+# Mirror
 
 Complete Flutter implementation of the Mirror spec.
 
