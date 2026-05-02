@@ -24,6 +24,11 @@ fi
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
+# Git exports repository-local variables into hooks; Flutter uses Git internally.
+while IFS= read -r local_env_var; do
+  unset "$local_env_var"
+done < <(git rev-parse --local-env-vars)
+
 if command -v mise >/dev/null 2>&1; then
   echo "Running tests before push: mise run test"
   exec mise run test
