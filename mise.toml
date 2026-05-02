@@ -6,11 +6,11 @@ java = "21"
 ninja = "1.13.2"
 
 [env]
-ANDROID_HOME = "{{env.HOME}}/Android/Sdk"
-ANDROID_SDK_ROOT = "{{env.HOME}}/Android/Sdk"
+ANDROID_HOME = "{{env.HOME | default(value=env.USERPROFILE)}}/Android/Sdk"
+ANDROID_SDK_ROOT = "{{env.HOME | default(value=env.USERPROFILE)}}/Android/Sdk"
 _.path = [
-  "{{env.HOME}}/Android/Sdk/cmdline-tools/latest/bin",
-  "{{env.HOME}}/Android/Sdk/platform-tools",
+  "{{env.HOME | default(value=env.USERPROFILE)}}/Android/Sdk/cmdline-tools/latest/bin",
+  "{{env.HOME | default(value=env.USERPROFILE)}}/Android/Sdk/platform-tools",
 ]
 
 [tasks.install]
