@@ -5,12 +5,23 @@ flutter = "3.41.9-stable"
 ninja = "1.13.2"
 
 [tasks.install]
-description = "Install Dart dependencies."
-run = "flutter pub get"
+description = "Install Dart dependencies and Git hooks."
+run = [
+  "flutter pub get",
+  "tools/install-git-hooks",
+]
+
+[tasks.install-git-hooks]
+description = "Install committed Git hooks."
+run = "tools/install-git-hooks"
 
 [tasks.fmt]
 description = "Check Dart formatting."
 run = "dart format --set-exit-if-changed ."
+
+[tasks.test]
+description = "Run Flutter tests."
+run = "flutter test"
 
 [tasks.gui]
 description = "Launch the app on an available Flutter target."

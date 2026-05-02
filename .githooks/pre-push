@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Run the Mirror test suite before Git pushes commits.
+
+Usage:
+  .githooks/pre-push [remote-name remote-url]
+  .githooks/pre-push --help
+
+Environment:
+  PATH  Must include mise or flutter.
+
+Git invokes this hook automatically when core.hooksPath points at .githooks.
+USAGE
+}
+
+if [[ "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+if command -v mise >/dev/null 2>&1; then
+  echo "Running tests before push: mise run test"
+  exec mise run test
+fi
+
+echo "Running tests before push: flutter test"
+exec flutter test

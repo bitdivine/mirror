@@ -24,13 +24,16 @@ Install and activate mise by following the official installation guide:
 
 https://mise.jdx.dev/
 
-From the repository root, trust the local mise configuration, install the project tooling declared in `mise.toml`, and install Dart dependencies:
+From the repository root, trust the local mise configuration, install the project tooling declared in `mise.toml`, install Dart dependencies, and install Git hooks:
 
 ```sh
 mise trust
 mise install
 mise run install
 ```
+
+The install task configures this clone to use the committed hooks in `.githooks`.
+The pre-push hook runs the test suite before Git allows a push.
 
 On Debian-family systems, install the host development packages needed for
 Linux app builds and Debian package builds:
@@ -48,7 +51,7 @@ flutter doctor
 Then run the test suite:
 
 ```sh
-flutter test
+mise run test
 ```
 
 Launch the app on an available Flutter target:
