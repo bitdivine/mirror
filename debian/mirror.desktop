@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Mirror
+Comment=Mirror camera app
+Exec=mirror
+Terminal=false
+Categories=Utility;

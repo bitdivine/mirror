@@ -15,3 +15,7 @@ run = "dart format --set-exit-if-changed ."
 [tasks.gui]
 description = "Launch the app on an available Flutter target."
 run = "CC=clang CXX=clang flutter run"
+
+[tasks.package-deb]
+description = "Build the Flutter Linux app as a Debian package."
+run = "tools/package-deb"

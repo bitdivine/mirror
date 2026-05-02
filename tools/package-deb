@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Build the Mirror Flutter app as a Debian package.
+
+Usage:
+  tools/package-deb [--help]
+
+Environment:
+  PACKAGE_DEB_OUTPUT_DIR  Output directory for the .deb artifact.
+                          Default: dist/deb
+
+The script builds the Flutter Linux release bundle, assembles a Debian package,
+and writes exactly one mirror_*.deb artifact to the output directory.
+USAGE
+}
+
+if [[ "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -ne 0 ]]; then
+  usage >&2
+  exit 2
+fi
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+require_command() {
+  local command_name="$1"
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    echo "Missing required command: $command_name" >&2
+    exit 1
+  fi
+}
+
+require_pkg_config_module() {
+  local module_name="$1"
+  if ! pkg-config --exists "$module_name"; then
+    echo "Missing native build dependency: $module_name" >&2
+    echo "Install the matching Debian development package, then rerun mise run package-deb." >&2
+    exit 1
+  fi
+}
+
+require_command awk
+require_command clang
+require_command cp
+require_command desktop-file-validate
+require_command dpkg
+require_command dpkg-deb
+require_command flutter
+require_command install
+require_command ln
+require_command pkg-config
+require_command sed
+
+require_pkg_config_module gtk+-3.0
+require_pkg_config_module gstreamer-1.0
+require_pkg_config_module gstreamer-app-1.0
+require_pkg_config_module gstreamer-video-1.0
+
+package_name="mirror"
+version="$(awk -F': ' '$1 == "version" { print $2; exit }' pubspec.yaml)"
+if [[ -z "$version" ]]; then
+  echo "Could not read package version from pubspec.yaml." >&2
+  exit 1
+fi
+
+architecture="$(dpkg --print-architecture)"
+output_dir="${PACKAGE_DEB_OUTPUT_DIR:-dist/deb}"
+bundle_dir="build/linux/x64/release/bundle"
+artifact="${output_dir}/${package_name}_${version}_${architecture}.deb"
+work_dir="$(mktemp -d)"
+trap 'rm -rf "$work_dir"' EXIT
+
+mkdir -p "$work_dir/bin"
+cat >"$work_dir/bin/clang++" <<'CLANGXX'
+#!/usr/bin/env bash
+set -euo pipefail
+
+stdlib_flags=()
+if [[ -d /usr/include/c++/11 && -d /usr/include/x86_64-linux-gnu/c++/11 ]]; then
+  stdlib_flags+=("-I/usr/include/c++/11")
+  stdlib_flags+=("-I/usr/include/x86_64-linux-gnu/c++/11")
+fi
+if [[ -d /usr/lib/gcc/x86_64-linux-gnu/11 ]]; then
+  stdlib_flags+=("-L/usr/lib/gcc/x86_64-linux-gnu/11")
+fi
+
+is_compile_only=false
+for argument in "$@"; do
+  case "$argument" in
+    -c|-E|-M|-MM|--version|-v)
+      is_compile_only=true
+      ;;
+  esac
+done
+
+if [[ "$is_compile_only" == true ]]; then
+  exec clang "${stdlib_flags[@]}" "$@"
+fi
+
+exec clang "${stdlib_flags[@]}" "$@" -lstdc++
+CLANGXX
+chmod +x "$work_dir/bin/clang++"
+
+export CC="${CC:-clang}"
+export CXX="${CXX:-$work_dir/bin/clang++}"
+
+flutter build linux --release
+
+if [[ ! -x "${bundle_dir}/${package_name}" ]]; then
+  echo "Flutter release bundle was not created at ${bundle_dir}." >&2
+  exit 1
+fi
+
+package_root="$work_dir/package-root"
+control_dir="$package_root/DEBIAN"
+install -d "$control_dir"
+install -d "$package_root/opt/${package_name}"
+install -d "$package_root/usr/bin"
+install -d "$package_root/usr/share/applications"
+
+cp -a "${bundle_dir}/." "$package_root/opt/${package_name}/"
+ln -s "/opt/${package_name}/${package_name}" "$package_root/usr/bin/${package_name}"
+install -m 0644 debian/mirror.desktop "$package_root/usr/share/applications/mirror.desktop"
+desktop-file-validate "$package_root/usr/share/applications/mirror.desktop"
+
+sed \
+  -e "s/@VERSION@/${version}/g" \
+  -e "s/@ARCHITECTURE@/${architecture}/g" \
+  debian/control >"$control_dir/control"
+
+install -d "$output_dir"
+rm -f "${output_dir}/${package_name}_"*.deb
+dpkg-deb --root-owner-group --build "$package_root" "$artifact"
+
+shopt -s nullglob
+artifacts=("${output_dir}/${package_name}_"*.deb)
+if [[ "${#artifacts[@]}" -ne 1 || ! -f "$artifact" ]]; then
+  echo "Expected exactly one Debian package at ${artifact}." >&2
+  exit 1
+fi
+
+echo "Built ${artifact}"
