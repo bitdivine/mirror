@@ -22,10 +22,12 @@ class MirroredCameraPreview extends StatelessWidget {
           child: SizedBox(
             width: aspectRatio,
             height: 1,
-            child: Transform.flip(
-              flipX: true,
-              child: controller.buildPreview(),
-            ),
+            child: controller.isPreviewMirrored
+                ? controller.buildPreview()
+                : Transform.flip(
+                    flipX: true,
+                    child: controller.buildPreview(),
+                  ),
           ),
         ),
       ),

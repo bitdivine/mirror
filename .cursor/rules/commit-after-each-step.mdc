@@ -1,0 +1,27 @@
+---
+description: Plans must include a commit step after every step that makes a change
+alwaysApply: true
+---
+
+# Commit after every change step in plans
+
+When creating a plan (e.g. a todo list or numbered steps), insert a **commit step** immediately after every step that produces a file change. Do not batch commits at the end.
+
+Example:
+
+1. Update the design doc to add the new field
+2. **Commit**
+3. Update `lib/foo.py` to include the new field
+4. **Commit**
+5. Update tests for the new field
+6. **Commit**
+7. Regenerate the golden fixture
+8. **Commit**
+
+Not:
+
+1. Update the design doc
+2. Update `lib/foo.py`
+3. Update tests
+4. Regenerate the golden fixture
+5. Commit all changes

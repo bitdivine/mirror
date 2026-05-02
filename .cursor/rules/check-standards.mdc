@@ -1,0 +1,17 @@
+---
+description: Before starting any task that involves changes, list and assess applicable standards
+alwaysApply: true
+---
+
+# Check applicable standards before starting work
+
+Before making any changes (code, docs, config, etc.):
+
+1. List the contents of `./standards/`.
+2. Read `./standards/README.md` to understand the two standard categories:
+   - **Process standards** govern how work is done. They apply to **every task that produces changes**, regardless of file type. There is no "not yet applicable" -- if you are making changes, process standards are in effect from the start and must be followed throughout.
+   - **Artefact standards** govern outputs. They apply when the task produces artefacts of the relevant type (e.g. `python.md` applies when editing `.py` files).
+3. For each standard, state whether it applies and why. Print this as a table with columns: Standard, Category (process/artefact), Applicable (yes/no), Reason. Do not skip this step.
+4. Adhere to all applicable standards throughout the task. Process standards (e.g. `git.md`: commit after each small self-contained change) must be followed continuously as you work, not deferred to the end.
+
+This check happens at the **start** of the task, not at the end.

@@ -1,8 +1,8 @@
-# mirror
+# Mirror
 
-Minimal Flutter implementation of the cross-platform app feature.
+Complete Flutter implementation of the Mirror spec.
 
-The app renders visible placeholder content:
+The current app renders visible placeholder content:
 
 ```text
 Hello world
@@ -24,13 +24,35 @@ Install and activate mise by following the official installation guide:
 
 https://mise.jdx.dev/
 
-From the repository root, trust the local mise configuration, install the project tooling declared in `mise.toml`, and install Dart dependencies:
+From the repository root, trust the local mise configuration, install the project tooling declared in `mise.toml`, install Dart dependencies, and install Git hooks:
 
 ```sh
 mise trust
 mise install
 mise run install
 ```
+
+Flutter is also vendored at `vendor/flutter`. To use that vendored SDK as a
+local mise install instead of downloading Flutter, initialise submodules and
+link it before `mise install`:
+
+```sh
+git submodule update --init --recursive
+mise run vendor:flutter:link
+```
+
+The install task configures this clone to use the committed hooks in `.githooks`.
+The pre-push hook runs the test suite before Git allows a push.
+
+On Debian-family systems, install the host development packages needed for
+Linux app builds and Debian package builds from the Debian package metadata:
+
+```sh
+mise run install-apt-dev-deps
+```
+
+The apt development dependency list comes from `Build-Depends` in
+`debian/control`.
 
 Check that Flutter can see the required platform tooling:
 
@@ -41,23 +63,16 @@ flutter doctor
 Then run the test suite:
 
 ```sh
-flutter test
+mise run test
 ```
 
-Launch the app on an available Flutter target:
+Launch the Linux app with verbose logs written to `log.txt`:
 
 ```sh
-flutter run
+mise run linux
 ```
 
 ## Debian Package
-
-Install the host packages that provide Debian packaging tools and Linux native
-development headers:
-
-```sh
-sudo apt install desktop-file-utils dpkg-dev libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev pkg-config
-```
 
 Build the Debian package from the repository root:
 

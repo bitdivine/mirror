@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
-import 'dart:ffi';
-import 'dart:io';
+
+import 'diagnostics_platform.dart';
 
 class Diagnostics {
   const Diagnostics({required this.appVersion});
@@ -8,17 +8,17 @@ class Diagnostics {
   final String appVersion;
 
   void logStartupPhase(String phase) {
-    developer.log(
+    _log(
       'startup phase=$phase appVersion=$appVersion '
-      'os=${Platform.operatingSystem} architecture=${Abi.current()}',
+      'os=$operatingSystemName architecture=$processorArchitecture',
       name: 'mirror.startup',
     );
   }
 
   void logStartupError(Object error, StackTrace stackTrace) {
-    developer.log(
+    _log(
       'startup phase=startup-error appVersion=$appVersion '
-      'os=${Platform.operatingSystem} architecture=${Abi.current()}',
+      'os=$operatingSystemName architecture=$processorArchitecture',
       name: 'mirror.startup',
       error: error,
       stackTrace: stackTrace,
@@ -26,20 +26,41 @@ class Diagnostics {
   }
 
   void logCameraPhase(String phase) {
-    developer.log(
+    _log(
       'camera phase=$phase appVersion=$appVersion '
-      'os=${Platform.operatingSystem}',
+      'os=$operatingSystemName',
       name: 'mirror.camera',
     );
   }
 
   void logCameraError(String category, Object error, StackTrace stackTrace) {
-    developer.log(
+    _log(
       'camera phase=error category=$category appVersion=$appVersion '
-      'os=${Platform.operatingSystem}',
+      'os=$operatingSystemName',
       name: 'mirror.camera',
       error: error,
       stackTrace: stackTrace,
     );
+  }
+
+  void _log(
+    String message, {
+    required String name,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    developer.log(
+      message,
+      name: name,
+      error: error,
+      stackTrace: stackTrace,
+    );
+    print('[$name] $message');
+    if (error != null) {
+      print('[$name] error=$error');
+    }
+    if (stackTrace != null) {
+      print(stackTrace);
+    }
   }
 }

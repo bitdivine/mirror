@@ -1,4 +1,5 @@
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../diagnostics.dart';
@@ -15,6 +16,8 @@ abstract class MirrorCameraController {
   bool get isReady;
 
   double get aspectRatio;
+
+  bool get isPreviewMirrored;
 
   Widget buildPreview();
 
@@ -94,21 +97,59 @@ class FlutterCameraService implements CameraService {
         return const MirrorCameraState.cameraUnavailable();
       }
 
-      final selectedCamera = _selectCamera(cameras, cameraId);
-      final controller = CameraController(
-        selectedCamera,
-        ResolutionPreset.high,
-        enableAudio: false,
-      );
+      final cameraOptions =
+          cameras.map(_toCameraOption).toList(growable: false);
+      CameraException? lastCameraException;
+      StackTrace? lastCameraStackTrace;
 
-      await controller.initialize();
-      _activeController = CameraControllerAdapter(controller);
-      diagnostics.logCameraPhase('ready');
-      return MirrorCameraState.ready(
-        _activeController!,
-        selectedCameraId: selectedCamera.name,
-        cameras: cameras.map(_toCameraOption).toList(growable: false),
-      );
+      for (final selectedCamera in _startupCameraOrder(cameras, cameraId)) {
+        for (final resolutionPreset in _startupResolutionPresets()) {
+          diagnostics.logCameraPhase(
+            'initialize ${selectedCamera.name} preset=${resolutionPreset.name}',
+          );
+          final controller = CameraController(
+            selectedCamera,
+            resolutionPreset,
+            enableAudio: false,
+          );
+
+          try {
+            await controller.initialize();
+            _activeController = CameraControllerAdapter(controller);
+            diagnostics.logCameraPhase('ready');
+            return MirrorCameraState.ready(
+              _activeController!,
+              selectedCameraId: selectedCamera.name,
+              cameras: cameraOptions,
+            );
+          } on CameraException catch (error, stackTrace) {
+            lastCameraException = error;
+            lastCameraStackTrace = stackTrace;
+            diagnostics.logCameraError(
+              _cameraExceptionCategory(error),
+              error,
+              stackTrace,
+            );
+            await controller.dispose();
+          }
+        }
+      }
+
+      if (lastCameraException != null) {
+        if (_cameraExceptionCategory(lastCameraException) ==
+            'permission-denied') {
+          return const MirrorCameraState.permissionDenied();
+        }
+        return MirrorCameraState.failed(lastCameraException);
+      }
+      if (lastCameraStackTrace != null) {
+        diagnostics.logCameraError(
+          'startup-failed',
+          'Camera initialization failed without an exception',
+          lastCameraStackTrace,
+        );
+      }
+      return MirrorCameraState.failed('Camera initialization failed');
     } on CameraException catch (error, stackTrace) {
       final category = _cameraExceptionCategory(error);
       diagnostics.logCameraError(category, error, stackTrace);
@@ -134,24 +175,42 @@ class FlutterCameraService implements CameraService {
     await controller.dispose();
   }
 
-  CameraDescription _selectCamera(
+  List<ResolutionPreset> _startupResolutionPresets() {
+    if (defaultTargetPlatform == TargetPlatform.linux) {
+      return const [
+        ResolutionPreset.low,
+        ResolutionPreset.medium,
+      ];
+    }
+    return const [ResolutionPreset.high];
+  }
+
+  List<CameraDescription> _startupCameraOrder(
     List<CameraDescription> cameras,
     String? cameraId,
   ) {
+    final ordered = <CameraDescription>[];
     if (cameraId != null) {
       for (final camera in cameras) {
         if (camera.name == cameraId) {
-          return camera;
+          ordered.add(camera);
+          break;
         }
       }
     }
 
     for (final camera in cameras) {
-      if (camera.lensDirection == CameraLensDirection.front) {
-        return camera;
+      if (camera.lensDirection == CameraLensDirection.front &&
+          !ordered.contains(camera)) {
+        ordered.add(camera);
       }
     }
-    return cameras.first;
+    for (final camera in cameras) {
+      if (!ordered.contains(camera)) {
+        ordered.add(camera);
+      }
+    }
+    return ordered;
   }
 
   MirrorCameraOption _toCameraOption(CameraDescription camera) {
@@ -193,6 +252,20 @@ class CameraControllerAdapter implements MirrorCameraController {
 
   @override
   double get aspectRatio => controller.value.aspectRatio;
+
+  @override
+  bool get isPreviewMirrored {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.linux ||
+      TargetPlatform.macOS ||
+      TargetPlatform.windows =>
+        true,
+      TargetPlatform.android ||
+      TargetPlatform.fuchsia ||
+      TargetPlatform.iOS =>
+        false,
+    };
+  }
 
   @override
   Widget buildPreview() => CameraPreview(controller);

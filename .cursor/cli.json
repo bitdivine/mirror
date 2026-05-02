@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(**)",
+      "Write(**)",
+      "Edit(**)",
+      "Read(**)",
+      "Grep(**)",
+      "Glob(**)",
+      "Delete(**)",
+      "Task(**)",
+      "WebFetch(**)",
+      "WebSearch(**)",
+      "CallMcpTool(**,**)",
+      "FetchMcpResource(**,**)"
+    ],
+    "deny": []
+  }
+}
