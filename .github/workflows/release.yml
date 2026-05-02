@@ -13,7 +13,7 @@ jobs:
         with:
           install: true
       - run: mise run install
-      - run: mise run fmyt
+      - run: mise run fmt
       - run: flutter analyze
       - run: flutter test
 

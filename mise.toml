@@ -8,7 +8,7 @@ ninja = "1.13.2"
 description = "Install Dart dependencies."
 run = "flutter pub get"
 
-[tasks.fmyt]
+[tasks.fmt]
 description = "Check Dart formatting."
 run = "dart format --set-exit-if-changed ."
 
