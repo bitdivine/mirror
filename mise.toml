@@ -1,0 +1,18 @@
+[tools]
+flutter = "3.41.9-stable"
+
+[tasks.doctor]
+description = "Check Flutter platform setup."
+run = "flutter doctor"
+
+[tasks.deps]
+description = "Install Dart dependencies."
+run = "flutter pub get"
+
+[tasks.test]
+description = "Run Flutter tests."
+run = "flutter test"
+
+[tasks.gui]
+description = "Launch the Flutter app."
+run = "flutter run"
