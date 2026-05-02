@@ -1,4 +1,6 @@
 [tools]
+"vfox:mise-plugins/vfox-clang" = "22.1.3"
+cmake = "4.3.2"
 flutter = "3.41.9-stable"
 ninja = "1.13.2"
 
@@ -9,3 +11,7 @@ run = "flutter pub get"
 [tasks.fmyt]
 description = "Check Dart formatting."
 run = "dart format --set-exit-if-changed ."
+
+[tasks.gui]
+description = "Launch the app on an available Flutter target."
+run = "CC=clang CXX=clang flutter run"

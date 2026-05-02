@@ -1,11 +1,5 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.13)
-if(NOT DEFINED ENV{CXX})
-  find_program(GXX_COMPILER g++)
-  if(GXX_COMPILER)
-    set(CMAKE_CXX_COMPILER "${GXX_COMPILER}" CACHE FILEPATH "C++ compiler" FORCE)
-  endif()
-endif()
 project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
