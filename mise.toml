@@ -1,7 +1,6 @@
 [tools]
 "vfox:mise-plugins/vfox-clang" = "22.1.3"
 cmake = "4.3.2"
-flutter = "3.41.9-stable"
 java = "21"
 ninja = "1.13.2"
 
@@ -9,6 +8,7 @@ ninja = "1.13.2"
 ANDROID_HOME = "{{env.HOME}}/Android/Sdk"
 ANDROID_SDK_ROOT = "{{env.HOME}}/Android/Sdk"
 _.path = [
+  "{{config_root}}/vendor/flutter/bin",
   "{{env.HOME}}/Android/Sdk/cmdline-tools/latest/bin",
   "{{env.HOME}}/Android/Sdk/platform-tools",
 ]
@@ -16,6 +16,7 @@ _.path = [
 [tasks.install]
 description = "Install Dart dependencies and Git hooks."
 run = [
+  "mise run vendor:flutter:check",
   "flutter pub get",
   "tools/install-git-hooks",
 ]
@@ -27,6 +28,23 @@ run = "tools/install-git-hooks"
 [tasks.install-apt-dev-deps]
 description = "Install Debian build dependencies from debian/control."
 run = "sudo apt-get update && sudo apt-get --yes build-dep ."
+
+[tasks."vendor:flutter:check"]
+description = "Verify the vendored Flutter SDK is present."
+run = '''
+set -eu
+
+flutter_sdk="vendor/flutter"
+flutter_bin="$flutter_sdk/bin/flutter"
+
+if [ ! -x "$flutter_bin" ]; then
+  echo "Vendored Flutter SDK is missing at $flutter_sdk." >&2
+  echo "Initialise submodules with: git submodule update --init --recursive" >&2
+  exit 1
+fi
+
+"$flutter_bin" --version
+'''
 
 [tasks."android:sdk"]
 description = "Install the Android SDK command-line tools."

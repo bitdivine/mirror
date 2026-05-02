@@ -24,13 +24,17 @@ Install and activate mise by following the official installation guide:
 
 https://mise.jdx.dev/
 
-From the repository root, trust the local mise configuration, install the project tooling declared in `mise.toml`, install Dart dependencies, and install Git hooks:
+From the repository root, initialise submodules, trust the local mise configuration, install the project tooling declared in `mise.toml`, install Dart dependencies, and install Git hooks:
 
 ```sh
+git submodule update --init --recursive
 mise trust
 mise install
 mise run install
 ```
+
+Flutter is vendored at `vendor/flutter`. The install task checks that this
+vendored SDK is present before running `flutter pub get`.
 
 The install task configures this clone to use the committed hooks in `.githooks`.
 The pre-push hook runs the test suite before Git allows a push.
