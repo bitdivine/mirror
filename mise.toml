@@ -4,6 +4,7 @@ cmake = "4.3.2"
 flutter = "3.41.9"
 java = "21"
 ninja = "1.13.2"
+"aqua:zizmorcore/zizmor" = "1.24.1"
 
 [env]
 ANDROID_HOME = '{% if env.ANDROID_HOME is defined %}{{env.ANDROID_HOME}}{% else %}{{env.HOME | default(value=env.USERPROFILE)}}/Android/Sdk{% endif %}'
