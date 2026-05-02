@@ -13,6 +13,8 @@ jobs:
         with:
           install: true
       - run: mise run install
+      - run: dart format --set-exit-if-changed .
+      - run: flutter analyze
       - run: flutter test
 
   linux:

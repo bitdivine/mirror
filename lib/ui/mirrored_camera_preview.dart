@@ -22,9 +22,8 @@ class MirroredCameraPreview extends StatelessWidget {
           child: SizedBox(
             width: aspectRatio,
             height: 1,
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()..scale(-1.0, 1.0, 1.0),
+            child: Transform.flip(
+              flipX: true,
               child: controller.buildPreview(),
             ),
           ),
