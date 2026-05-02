@@ -20,7 +20,7 @@ The feature target list is Unix, macOS, Windows, iPhone, and Android. In Flutter
 
 ## Getting Started
 
-Install mise by following the official installation guide:
+Install and activate mise by following the official installation guide:
 
 https://mise.jdx.dev/
 
@@ -34,24 +34,24 @@ mise install
 Check that Flutter can see the required platform tooling:
 
 ```sh
-mise run doctor
+flutter doctor
 ```
 
 Then fetch dependencies and run the test suite:
 
 ```sh
-mise run deps
-mise run test
+flutter pub get
+flutter test
 ```
 
 Launch the app on an available Flutter target:
 
 ```sh
-mise run gui
+flutter run
 ```
 
 If platform directories have not been generated yet, run:
 
 ```sh
-mise exec -- flutter create --platforms=android,ios,linux,macos,windows .
+flutter create --platforms=android,ios,linux,macos,windows .
 ```
