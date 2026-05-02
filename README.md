@@ -50,6 +50,24 @@ Launch the app on an available Flutter target:
 flutter run
 ```
 
+## Debian Package
+
+Install the host packages that provide Debian packaging tools and Linux native
+development headers:
+
+```sh
+sudo apt install desktop-file-utils dpkg-dev libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev pkg-config
+```
+
+Build the Debian package from the repository root:
+
+```sh
+mise run package-deb
+```
+
+The package is written to `dist/deb/` with a filename in the form
+`mirror_<version>_<architecture>.deb`.
+
 If platform directories have not been generated yet, run:
 
 ```sh
