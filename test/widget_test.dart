@@ -147,6 +147,19 @@ void main() {
     final transform = tester.widget<Transform>(find.byType(Transform));
     expect(transform.transform.storage[0], -1);
   });
+
+  testWidgets('mirrored platform preview is not flipped again', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MirroredCameraPreview(
+          controller: FakeMirrorCameraController(isPreviewMirrored: true),
+        ),
+      ),
+    );
+
+    expect(find.byType(Transform), findsNothing);
+    expect(find.text('camera-preview'), findsOneWidget);
+  });
 }
 
 class FakeCameraService implements CameraService {
@@ -171,12 +184,18 @@ class FakeCameraService implements CameraService {
 }
 
 class FakeMirrorCameraController implements MirrorCameraController {
-  const FakeMirrorCameraController({this.ready = true});
+  const FakeMirrorCameraController({
+    this.ready = true,
+    this.isPreviewMirrored = false,
+  });
 
   final bool ready;
 
   @override
   bool get isReady => ready;
+
+  @override
+  final bool isPreviewMirrored;
 
   @override
   double get aspectRatio => 1;

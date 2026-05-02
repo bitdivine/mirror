@@ -21,6 +21,7 @@ class MirrorScreen extends StatefulWidget {
 class _MirrorScreenState extends State<MirrorScreen>
     with WidgetsBindingObserver {
   MirrorCameraState _cameraState = const MirrorCameraState.starting();
+  Future<void>? _cameraStart;
 
   @override
   void initState() {
@@ -56,6 +57,21 @@ class _MirrorScreenState extends State<MirrorScreen>
   }
 
   Future<void> _startCamera({String? cameraId}) async {
+    if (_cameraStart != null) {
+      return _cameraStart;
+    }
+    final start = _startCameraOnce(cameraId: cameraId);
+    _cameraStart = start;
+    try {
+      await start;
+    } finally {
+      if (_cameraStart == start) {
+        _cameraStart = null;
+      }
+    }
+  }
+
+  Future<void> _startCameraOnce({String? cameraId}) async {
     widget.diagnostics.logCameraPhase('screen-start');
     setState(() {
       _cameraState = const MirrorCameraState.starting();
