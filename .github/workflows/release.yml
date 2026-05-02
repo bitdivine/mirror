@@ -9,12 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: jdx/mise-action@v2
         with:
           install: false
-      - run: mise run vendor:flutter:link
       - run: mise install
       - run: mise run install
       - run: mise run fmt
@@ -25,14 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - run: sudo apt-get update
       - run: sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good libv4l-dev
       - uses: jdx/mise-action@v2
         with:
           install: false
-      - run: mise run vendor:flutter:link
       - run: mise install
       - run: flutter create --platforms=linux .
       - run: flutter build linux --release
@@ -41,12 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: jdx/mise-action@v2
         with:
           install: false
-      - run: mise run vendor:flutter:link
       - run: mise install
       - run: flutter create --platforms=android .
       - run: python3 -c "from pathlib import Path; p=Path('android/app/src/main/AndroidManifest.xml'); s=p.read_text(); permission='<uses-permission android:name=\"android.permission.CAMERA\" />'; p.write_text(s.replace('<application', permission + '\\n    <application') if permission not in s else s)"
@@ -56,12 +47,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: jdx/mise-action@v2
         with:
           install: false
-      - run: mise run vendor:flutter:link
       - run: mise install
       - run: flutter create --platforms=ios,macos .
       - run: /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string Camera access is used to display the virtual mirror preview." ios/Runner/Info.plist
@@ -75,13 +63,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: jdx/mise-action@v2
         with:
           install: false
-      - shell: bash
-        run: mise run vendor:flutter:link
       - run: mise install
       - run: flutter create --platforms=windows .
       - run: flutter build windows --release
