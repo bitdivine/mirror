@@ -38,6 +38,14 @@ tools_url="https://dl.google.com/android/repository/commandlinetools-linux-14742
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
+if [ -x "$sdk/cmdline-tools/latest/bin/sdkmanager" ] &&
+  [ -x "$sdk/platform-tools/adb" ] &&
+  [ -d "$sdk/platforms/android-35" ] &&
+  [ -d "$sdk/build-tools/35.0.0" ]; then
+  echo "Android SDK already installed at $sdk"
+  exit 0
+fi
+
 sudo apt-get update
 sudo apt-get install --yes curl unzip
 
