@@ -2,7 +2,16 @@
 "vfox:mise-plugins/vfox-clang" = "22.1.3"
 cmake = "4.3.2"
 flutter = "3.41.9-stable"
+java = "21"
 ninja = "1.13.2"
+
+[env]
+ANDROID_HOME = "{{env.HOME}}/Android/Sdk"
+ANDROID_SDK_ROOT = "{{env.HOME}}/Android/Sdk"
+_.path = [
+  "{{env.HOME}}/Android/Sdk/cmdline-tools/latest/bin",
+  "{{env.HOME}}/Android/Sdk/platform-tools",
+]
 
 [tasks.install]
 description = "Install Dart dependencies and Git hooks."
@@ -18,6 +27,36 @@ run = "tools/install-git-hooks"
 [tasks.install-apt-dev-deps]
 description = "Install Debian build dependencies from debian/control."
 run = "sudo apt-get update && sudo apt-get --yes build-dep ."
+
+[tasks."android:sdk"]
+description = "Install the Android SDK command-line tools."
+run = '''
+set -euo pipefail
+
+sdk="$HOME/Android/Sdk"
+tools_url="https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip"
+tmp="$(mktemp -d)"
+
+sudo apt-get update
+sudo apt-get install --yes curl unzip
+
+mkdir -p "$sdk/cmdline-tools"
+curl -fsSL "$tools_url" -o "$tmp/cmdline-tools.zip"
+unzip -q "$tmp/cmdline-tools.zip" -d "$tmp"
+
+rm -rf "$sdk/cmdline-tools/latest"
+mkdir -p "$sdk/cmdline-tools/latest"
+mv "$tmp/cmdline-tools/"* "$sdk/cmdline-tools/latest/"
+
+yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses
+"$sdk/cmdline-tools/latest/bin/sdkmanager" \
+  "cmdline-tools;latest" \
+  "platform-tools" \
+  "platforms;android-35" \
+  "build-tools;35.0.0"
+
+echo "Android SDK installed at $sdk"
+'''
 
 [tasks.fmt]
 description = "Check Dart formatting."
