@@ -13,7 +13,9 @@ jobs:
           submodules: recursive
       - uses: jdx/mise-action@v2
         with:
-          install: true
+          install: false
+      - run: mise run vendor:flutter:link
+      - run: mise install
       - run: mise run install
       - run: mise run fmt
       - run: flutter analyze
@@ -29,7 +31,9 @@ jobs:
       - run: sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good libv4l-dev
       - uses: jdx/mise-action@v2
         with:
-          install: true
+          install: false
+      - run: mise run vendor:flutter:link
+      - run: mise install
       - run: flutter create --platforms=linux .
       - run: flutter build linux --release
 
@@ -41,7 +45,9 @@ jobs:
           submodules: recursive
       - uses: jdx/mise-action@v2
         with:
-          install: true
+          install: false
+      - run: mise run vendor:flutter:link
+      - run: mise install
       - run: flutter create --platforms=android .
       - run: python3 -c "from pathlib import Path; p=Path('android/app/src/main/AndroidManifest.xml'); s=p.read_text(); permission='<uses-permission android:name=\"android.permission.CAMERA\" />'; p.write_text(s.replace('<application', permission + '\\n    <application') if permission not in s else s)"
       - run: flutter build apk --release
@@ -54,7 +60,9 @@ jobs:
           submodules: recursive
       - uses: jdx/mise-action@v2
         with:
-          install: true
+          install: false
+      - run: mise run vendor:flutter:link
+      - run: mise install
       - run: flutter create --platforms=ios,macos .
       - run: /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string Camera access is used to display the virtual mirror preview." ios/Runner/Info.plist
       - run: /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string Camera access is used to display the virtual mirror preview." macos/Runner/Info.plist
@@ -71,6 +79,9 @@ jobs:
           submodules: recursive
       - uses: jdx/mise-action@v2
         with:
-          install: true
+          install: false
+      - shell: bash
+        run: mise run vendor:flutter:link
+      - run: mise install
       - run: flutter create --platforms=windows .
       - run: flutter build windows --release
