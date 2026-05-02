@@ -36,6 +36,7 @@ set -euo pipefail
 sdk="$HOME/Android/Sdk"
 tools_url="https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip"
 tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
 
 sudo apt-get update
 sudo apt-get install --yes curl unzip
@@ -48,7 +49,9 @@ rm -rf "$sdk/cmdline-tools/latest"
 mkdir -p "$sdk/cmdline-tools/latest"
 mv "$tmp/cmdline-tools/"* "$sdk/cmdline-tools/latest/"
 
+set +o pipefail
 yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses
+set -o pipefail
 "$sdk/cmdline-tools/latest/bin/sdkmanager" \
   "cmdline-tools;latest" \
   "platform-tools" \
