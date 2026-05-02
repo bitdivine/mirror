@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
-import 'dart:ffi';
-import 'dart:io';
+
+import 'diagnostics_platform.dart';
 
 class Diagnostics {
   const Diagnostics({required this.appVersion});
@@ -10,7 +10,7 @@ class Diagnostics {
   void logStartupPhase(String phase) {
     developer.log(
       'startup phase=$phase appVersion=$appVersion '
-      'os=${Platform.operatingSystem} architecture=${Abi.current()}',
+      'os=$operatingSystemName architecture=$processorArchitecture',
       name: 'mirror.startup',
     );
   }
@@ -18,7 +18,7 @@ class Diagnostics {
   void logStartupError(Object error, StackTrace stackTrace) {
     developer.log(
       'startup phase=startup-error appVersion=$appVersion '
-      'os=${Platform.operatingSystem} architecture=${Abi.current()}',
+      'os=$operatingSystemName architecture=$processorArchitecture',
       name: 'mirror.startup',
       error: error,
       stackTrace: stackTrace,
@@ -28,7 +28,7 @@ class Diagnostics {
   void logCameraPhase(String phase) {
     developer.log(
       'camera phase=$phase appVersion=$appVersion '
-      'os=${Platform.operatingSystem}',
+      'os=$operatingSystemName',
       name: 'mirror.camera',
     );
   }
@@ -36,7 +36,7 @@ class Diagnostics {
   void logCameraError(String category, Object error, StackTrace stackTrace) {
     developer.log(
       'camera phase=error category=$category appVersion=$appVersion '
-      'os=${Platform.operatingSystem}',
+      'os=$operatingSystemName',
       name: 'mirror.camera',
       error: error,
       stackTrace: stackTrace,
