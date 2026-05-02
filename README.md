@@ -32,6 +32,13 @@ mise install
 mise run install
 ```
 
+On Debian-family systems, install the host development packages needed for
+Linux app builds and Debian package builds:
+
+```sh
+sudo apt install clang cmake desktop-file-utils dpkg-dev libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev ninja-build pkg-config
+```
+
 Check that Flutter can see the required platform tooling:
 
 ```sh
@@ -51,13 +58,6 @@ flutter run
 ```
 
 ## Debian Package
-
-Install the host packages that provide Debian packaging tools and Linux native
-development headers:
-
-```sh
-sudo apt install desktop-file-utils dpkg-dev libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev pkg-config
-```
 
 Build the Debian package from the repository root:
 
