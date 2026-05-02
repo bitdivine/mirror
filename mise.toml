@@ -31,7 +31,7 @@ run = "sudo apt-get update && sudo apt-get --yes build-dep ."
 [tasks."android:sdk"]
 description = "Install the Android SDK command-line tools."
 run = '''
-set -euo pipefail
+set -eu
 
 sdk="$HOME/Android/Sdk"
 tools_url="https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip"
@@ -49,9 +49,7 @@ rm -rf "$sdk/cmdline-tools/latest"
 mkdir -p "$sdk/cmdline-tools/latest"
 mv "$tmp/cmdline-tools/"* "$sdk/cmdline-tools/latest/"
 
-set +o pipefail
 yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses
-set -o pipefail
 "$sdk/cmdline-tools/latest/bin/sdkmanager" \
   "cmdline-tools;latest" \
   "platform-tools" \
