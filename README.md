@@ -1,22 +1,10 @@
 # Mirror
 
-Complete Flutter implementation of the Mirror spec.
-
-The current app renders visible placeholder content:
-
-```text
-Hello world
-```
+A cross-platform virtual mirror.
 
 ## Supported Targets
 
-The feature target list is Unix, macOS, Windows, iPhone, and Android. In Flutter build terms:
-
-- Unix is represented by the Linux desktop target.
-- macOS is represented by the Flutter macOS desktop target.
-- Windows is represented by the Flutter Windows desktop target.
-- iPhone is represented by the Flutter iOS target.
-- Android is represented by the Flutter Android target.
+The feature target list is Unix, macOS, Windows, iPhone, and Android.
 
 ## Getting Started
 
