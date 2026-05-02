@@ -24,11 +24,12 @@ Install and activate mise by following the official installation guide:
 
 https://mise.jdx.dev/
 
-From the repository root, trust the local mise configuration and install the project tooling declared in `mise.toml`:
+From the repository root, trust the local mise configuration, install the project tooling declared in `mise.toml`, and install Dart dependencies:
 
 ```sh
 mise trust
 mise install
+mise run install
 ```
 
 Check that Flutter can see the required platform tooling:
@@ -37,10 +38,9 @@ Check that Flutter can see the required platform tooling:
 flutter doctor
 ```
 
-Then fetch dependencies and run the test suite:
+Then run the test suite:
 
 ```sh
-flutter pub get
 flutter test
 ```
 

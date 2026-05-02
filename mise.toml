@@ -1,2 +1,6 @@
 [tools]
 flutter = "3.41.9-stable"
+
+[tasks.install]
+description = "Install Dart dependencies."
+run = "flutter pub get"
