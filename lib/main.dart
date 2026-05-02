@@ -2,40 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'platform/platform_services.dart';
+import 'app.dart';
+import 'camera/camera_service.dart';
+import 'diagnostics.dart';
 
 void main() {
-  const platformServices = DefaultPlatformServices();
+  const diagnostics = Diagnostics(appVersion: '0.1.0');
   runZonedGuarded(
     () {
-      platformServices.logStartupPhase('before-run-app');
-      runApp(const MirrorApp());
+      diagnostics.logStartupPhase('before-run-app');
+      runApp(
+        MirrorApp(
+          cameraService: FlutterCameraService(diagnostics: diagnostics),
+          diagnostics: diagnostics,
+        ),
+      );
     },
-    platformServices.logStartupError,
+    diagnostics.logStartupError,
   );
-}
-
-class MirrorApp extends StatelessWidget {
-  const MirrorApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Mirror',
-      home: MirrorHome(),
-    );
-  }
-}
-
-class MirrorHome extends StatelessWidget {
-  const MirrorHome({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('Hello world'),
-      ),
-    );
-  }
 }
