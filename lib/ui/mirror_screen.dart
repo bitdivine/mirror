@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../camera/camera_service.dart';
 import '../diagnostics.dart';
+import '../settings/settings_store.dart';
 import 'mirrored_camera_preview.dart';
 
 class MirrorScreen extends StatefulWidget {
   const MirrorScreen({
     required this.cameraService,
     required this.diagnostics,
+    required this.settingsStore,
     super.key,
   });
 
   final CameraService cameraService;
   final Diagnostics diagnostics;
+  final SettingsStore settingsStore;
 
   @override
   State<MirrorScreen> createState() => _MirrorScreenState();
@@ -77,7 +80,14 @@ class _MirrorScreenState extends State<MirrorScreen>
       _cameraState = const MirrorCameraState.starting();
     });
 
-    final nextState = await widget.cameraService.start(cameraId: cameraId);
+    final preferredCameraId =
+        cameraId ?? await widget.settingsStore.loadLastCameraId();
+    if (!mounted) {
+      return;
+    }
+
+    final nextState =
+        await widget.cameraService.start(cameraId: preferredCameraId);
     if (!mounted) {
       return;
     }
@@ -85,6 +95,12 @@ class _MirrorScreenState extends State<MirrorScreen>
     setState(() {
       _cameraState = nextState;
     });
+
+    final selectedCameraId = nextState.selectedCameraId;
+    if (nextState.status == MirrorCameraStatus.ready &&
+        selectedCameraId != null) {
+      await widget.settingsStore.saveLastCameraId(selectedCameraId);
+    }
   }
 
   @override
