@@ -65,6 +65,7 @@ require_pkg_config_module gstreamer-app-1.0
 require_pkg_config_module gstreamer-video-1.0
 
 package_name="mirror"
+application_id="com.example.mirror"
 version="$(awk -F': ' '$1 == "version" { print $2; exit }' pubspec.yaml)"
 if [[ -z "$version" ]]; then
   echo "Could not read package version from pubspec.yaml." >&2
@@ -125,11 +126,13 @@ install -d "$control_dir"
 install -d "$package_root/opt/${package_name}"
 install -d "$package_root/usr/bin"
 install -d "$package_root/usr/share/applications"
+install -d "$package_root/usr/share/icons/hicolor/scalable/apps"
 
 cp -a "${bundle_dir}/." "$package_root/opt/${package_name}/"
 ln -s "/opt/${package_name}/${package_name}" "$package_root/usr/bin/${package_name}"
-install -m 0644 debian/mirror.desktop "$package_root/usr/share/applications/mirror.desktop"
-desktop-file-validate "$package_root/usr/share/applications/mirror.desktop"
+install -m 0644 debian/mirror.desktop "$package_root/usr/share/applications/${application_id}.desktop"
+install -m 0644 debian/com.example.mirror.svg "$package_root/usr/share/icons/hicolor/scalable/apps/${application_id}.svg"
+desktop-file-validate "$package_root/usr/share/applications/${application_id}.desktop"
 
 control_field() {
   local field_name="$1"
