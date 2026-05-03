@@ -71,6 +71,12 @@ mise run package-deb
 The package is written to `dist/deb/` with a filename in the form
 `mirror_<version>_<architecture>.deb`.
 
+Build and install the Debian package on the current host:
+
+```sh
+mise run install-deb
+```
+
 If platform directories have not been generated yet, run:
 
 ```sh

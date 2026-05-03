@@ -121,3 +121,7 @@ run = "CC=clang CXX=clang flutter run"
 [tasks.package-deb]
 description = "Build the Flutter Linux app as a Debian package."
 run = "tools/package-deb"
+
+[tasks.install-deb]
+description = "Build and install the Flutter Linux app Debian package."
+run = "tools/install-deb"
