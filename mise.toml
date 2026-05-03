@@ -112,7 +112,7 @@ run = "flutter test"
 
 [tasks.linux]
 description = "Launch the Linux app with verbose Flutter logs in log.txt."
-run = "bash -o pipefail -c 'flutter run -d linux -v 2>&1 | tee log.txt'"
+run = "tools/install-linux-desktop-entry && bash -o pipefail -c 'flutter run -d linux -v 2>&1 | tee log.txt'"
 
 [tasks.gui]
 description = "Launch the app on an available Flutter target."

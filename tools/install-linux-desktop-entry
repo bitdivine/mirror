@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Install the Linux desktop entry and app icon for source launches.
+
+Usage:
+  tools/install-linux-desktop-entry [--help]
+
+Environment:
+  XDG_DATA_HOME  Base directory for per-user desktop metadata.
+                 Default: $HOME/.local/share
+  PATH           Must include install and mise.
+
+The script installs a per-user com.example.mirror.desktop file and matching
+hicolor app icon so Ubuntu can associate source-launched windows with the
+Mirror icon.
+USAGE
+}
+
+if [[ "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -ne 0 ]]; then
+  usage >&2
+  exit 2
+fi
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+require_command() {
+  local command_name="$1"
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    echo "Missing required command: $command_name" >&2
+    exit 1
+  fi
+}
+
+desktop_exec_arg() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  printf '"%s"' "$value"
+}
+
+require_command install
+require_command mise
+
+application_id="com.example.mirror"
+data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+desktop_dir="${data_home}/applications"
+icon_dir="${data_home}/icons/hicolor/scalable/apps"
+desktop_file="${desktop_dir}/${application_id}.desktop"
+icon_file="${icon_dir}/${application_id}.svg"
+mise_path="$(command -v mise)"
+
+install -d "$desktop_dir"
+install -d "$icon_dir"
+install -m 0644 "debian/${application_id}.svg" "$icon_file"
+
+{
+  echo "[Desktop Entry]"
+  echo "Type=Application"
+  echo "Name=Mirror"
+  echo "Comment=Mirror camera app"
+  echo "Exec=$(desktop_exec_arg "$mise_path") --cd $(desktop_exec_arg "$repo_root") run linux"
+  echo "Icon=${application_id}"
+  echo "Terminal=false"
+  echo "Categories=Utility;"
+  echo "StartupNotify=true"
+  echo "StartupWMClass=${application_id}"
+} >"$desktop_file"
+
+if command -v desktop-file-validate >/dev/null 2>&1; then
+  desktop-file-validate "$desktop_file"
+fi
+
+echo "Installed ${desktop_file}"
