@@ -4,6 +4,7 @@ cmake = "4.3.2"
 flutter = "3.41.9"
 java = "21"
 ninja = "1.13.2"
+"aqua:mikefarah/yq" = "4.53.2"
 "aqua:zizmorcore/zizmor" = "1.24.1"
 
 [env]
@@ -112,7 +113,7 @@ run = "flutter test"
 
 [tasks.linux]
 description = "Launch the Linux app with verbose Flutter logs in log.txt."
-run = "bash -o pipefail -c 'flutter run -d linux -v 2>&1 | tee log.txt'"
+run = "tools/install-linux-desktop-entry && bash -o pipefail -c 'flutter run -d linux -v 2>&1 | tee log.txt'"
 
 [tasks.gui]
 description = "Launch the app on an available Flutter target."
@@ -121,3 +122,7 @@ run = "CC=clang CXX=clang flutter run"
 [tasks.package-deb]
 description = "Build the Flutter Linux app as a Debian package."
 run = "tools/package-deb"
+
+[tasks.install-deb]
+description = "Build and install the Flutter Linux app Debian package."
+run = "tools/install-deb"

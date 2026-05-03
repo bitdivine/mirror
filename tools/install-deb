@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Build and install the Mirror Flutter app Debian package.
+
+Usage:
+  tools/install-deb [--help]
+
+Environment:
+  PACKAGE_DEB_OUTPUT_DIR  Output directory for the .deb artifact.
+                          Default: dist/deb
+
+The script builds the Debian package with tools/package-deb, then installs the
+single generated mirror_*.deb artifact with apt-get.
+USAGE
+}
+
+if [[ "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -ne 0 ]]; then
+  usage >&2
+  exit 2
+fi
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+require_command() {
+  local command_name="$1"
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    echo "Missing required command: $command_name" >&2
+    exit 1
+  fi
+}
+
+require_command apt-get
+require_command sudo
+
+output_dir="${PACKAGE_DEB_OUTPUT_DIR:-dist/deb}"
+
+tools/package-deb
+
+shopt -s nullglob
+artifacts=("${output_dir}/mirror_"*.deb)
+if [[ "${#artifacts[@]}" -ne 1 ]]; then
+  echo "Expected exactly one Debian package in ${output_dir}." >&2
+  exit 1
+fi
+
+artifact="${artifacts[0]}"
+case "$artifact" in
+  /*) install_arg="$artifact" ;;
+  *) install_arg="./$artifact" ;;
+esac
+
+sudo apt-get install --yes "$install_arg"
