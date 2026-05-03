@@ -133,7 +133,34 @@ void main() {
     expect(cameraService.startCalls, 2);
   });
 
-  testWidgets('shows camera selector when multiple cameras are available',
+  testWidgets('hides camera selector until video is tapped', (tester) async {
+    final cameraService = FakeCameraService(
+      const MirrorCameraState.ready(
+        FakeMirrorCameraController(),
+        selectedCameraId: 'front',
+        cameras: [frontCamera, backCamera],
+      ),
+    );
+
+    await tester.pumpWidget(
+      MirrorApp(
+        cameraService: cameraService,
+        diagnostics: const Diagnostics(appVersion: 'test'),
+        settingsStore: FakeSettingsStore(),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('camera-selector')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('mirror-video-surface')));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('camera-selector')), findsOneWidget);
+    expect(find.text('Front camera'), findsOneWidget);
+  });
+
+  testWidgets('tapping video toggles camera selector visibility',
       (tester) async {
     final cameraService = FakeCameraService(
       const MirrorCameraState.ready(
@@ -152,8 +179,13 @@ void main() {
     );
     await tester.pump();
 
+    await tester.tap(find.byKey(const ValueKey('mirror-video-surface')));
+    await tester.pump();
     expect(find.byKey(const ValueKey('camera-selector')), findsOneWidget);
-    expect(find.text('Front camera'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('mirror-video-surface')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('camera-selector')), findsNothing);
   });
 
   testWidgets('changing selected camera restarts selected camera',
@@ -175,6 +207,9 @@ void main() {
         settingsStore: settingsStore,
       ),
     );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('mirror-video-surface')));
     await tester.pump();
 
     await tester.tap(find.byKey(const ValueKey('camera-selector')));
