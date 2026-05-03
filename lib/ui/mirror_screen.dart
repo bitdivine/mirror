@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ai/appearance_analysis.dart';
 import '../camera/camera_service.dart';
 import '../diagnostics.dart';
 import '../settings/settings_store.dart';
@@ -9,12 +10,14 @@ class MirrorScreen extends StatefulWidget {
   const MirrorScreen({
     required this.cameraService,
     required this.diagnostics,
+    required this.appearanceAnalysisService,
     required this.settingsStore,
     super.key,
   });
 
   final CameraService cameraService;
   final Diagnostics diagnostics;
+  final AppearanceAnalysisService appearanceAnalysisService;
   final SettingsStore settingsStore;
 
   @override
@@ -26,6 +29,9 @@ class _MirrorScreenState extends State<MirrorScreen>
   MirrorCameraState _cameraState = const MirrorCameraState.starting();
   Future<void>? _cameraStart;
   bool _controlsVisible = false;
+  bool _analysisInProgress = false;
+  AppearanceAnalysis? _appearanceAnalysis;
+  String? _analysisError;
 
   @override
   void initState() {
@@ -131,6 +137,7 @@ class _MirrorScreenState extends State<MirrorScreen>
             ),
             if (_controlsVisible && _cameraState.cameras.length > 1)
               _buildCameraSelector(_cameraState),
+            if (_controlsVisible) _buildAnalysisControls(),
           ],
         );
       case MirrorCameraStatus.permissionDenied:
@@ -150,6 +157,44 @@ class _MirrorScreenState extends State<MirrorScreen>
     setState(() {
       _controlsVisible = !_controlsVisible;
     });
+  }
+
+  Future<void> _analyzeAppearance() async {
+    final controller = _cameraState.controller;
+    if (controller == null || _analysisInProgress) {
+      return;
+    }
+
+    setState(() {
+      _analysisInProgress = true;
+      _analysisError = null;
+    });
+
+    try {
+      final still = await controller.takeStill();
+      final analysis =
+          await widget.appearanceAnalysisService.analyzeStill(still.file);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _appearanceAnalysis = analysis;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _analysisError = error.toString();
+      });
+    } finally {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _analysisInProgress = false;
+      });
+    }
   }
 
   Widget _buildFailure() {
@@ -205,6 +250,91 @@ class _MirrorScreenState extends State<MirrorScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAnalysisControls() {
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ElevatedButton(
+                      key: const ValueKey('analyze-appearance-button'),
+                      onPressed:
+                          _analysisInProgress ? null : _analyzeAppearance,
+                      child: Text(
+                        _analysisInProgress
+                            ? 'Analyzing appearance...'
+                            : 'Analyze appearance',
+                      ),
+                    ),
+                    if (_analysisError != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _analysisError!,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ],
+                    if (_appearanceAnalysis != null) ...[
+                      const SizedBox(height: 12),
+                      _buildAnalysisSummary(_appearanceAnalysis!),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnalysisSummary(AppearanceAnalysis analysis) {
+    final labels = analysis.impressionLabels.join(', ');
+    return DefaultTextStyle(
+      style: const TextStyle(color: Colors.white),
+      child: Column(
+        key: const ValueKey('appearance-analysis-result'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            analysis.overallDescription,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text('Appearance: ${analysis.visibleAppearance}'),
+          const SizedBox(height: 6),
+          Text('Tidiness: ${analysis.groomingAndTidiness}'),
+          const SizedBox(height: 6),
+          Text('Style: ${analysis.styleAndPresentation}'),
+          const SizedBox(height: 6),
+          Text('Likely occupation signals: '
+              '${analysis.likelyOccupationSignals}'),
+          const SizedBox(height: 6),
+          Text('Likely seniority signals: '
+              '${analysis.likelySenioritySignals}'),
+          if (labels.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text('Impression labels: $labels'),
+          ],
+          const SizedBox(height: 6),
+          Text('Uncertainty: ${analysis.uncertaintyNotes}'),
+        ],
       ),
     );
   }
