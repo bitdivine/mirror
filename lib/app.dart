@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 
 import 'camera/camera_service.dart';
 import 'diagnostics.dart';
+import 'settings/settings_store.dart';
 import 'ui/mirror_screen.dart';
 
 class MirrorApp extends StatelessWidget {
-  const MirrorApp({
+  MirrorApp({
     required this.cameraService,
     required this.diagnostics,
+    SettingsStore? settingsStore,
     super.key,
-  });
+  }) : settingsStore = settingsStore ?? FileSettingsStore();
 
   final CameraService cameraService;
   final Diagnostics diagnostics;
+  final SettingsStore settingsStore;
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +24,7 @@ class MirrorApp extends StatelessWidget {
       home: MirrorScreen(
         cameraService: cameraService,
         diagnostics: diagnostics,
+        settingsStore: settingsStore,
       ),
     );
   }

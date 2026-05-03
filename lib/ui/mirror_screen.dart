@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../camera/camera_service.dart';
 import '../diagnostics.dart';
+import '../settings/settings_store.dart';
 import 'mirrored_camera_preview.dart';
 
 class MirrorScreen extends StatefulWidget {
   const MirrorScreen({
     required this.cameraService,
     required this.diagnostics,
+    required this.settingsStore,
     super.key,
   });
 
   final CameraService cameraService;
   final Diagnostics diagnostics;
+  final SettingsStore settingsStore;
 
   @override
   State<MirrorScreen> createState() => _MirrorScreenState();
@@ -22,6 +25,7 @@ class _MirrorScreenState extends State<MirrorScreen>
     with WidgetsBindingObserver {
   MirrorCameraState _cameraState = const MirrorCameraState.starting();
   Future<void>? _cameraStart;
+  bool _controlsVisible = false;
 
   @override
   void initState() {
@@ -46,6 +50,7 @@ class _MirrorScreenState extends State<MirrorScreen>
       widget.cameraService.stop();
       setState(() {
         _cameraState = const MirrorCameraState.starting();
+        _controlsVisible = false;
       });
       return;
     }
@@ -75,9 +80,17 @@ class _MirrorScreenState extends State<MirrorScreen>
     widget.diagnostics.logCameraPhase('screen-start');
     setState(() {
       _cameraState = const MirrorCameraState.starting();
+      _controlsVisible = false;
     });
 
-    final nextState = await widget.cameraService.start(cameraId: cameraId);
+    final preferredCameraId =
+        cameraId ?? await widget.settingsStore.loadLastCameraId();
+    if (!mounted) {
+      return;
+    }
+
+    final nextState =
+        await widget.cameraService.start(cameraId: preferredCameraId);
     if (!mounted) {
       return;
     }
@@ -85,6 +98,12 @@ class _MirrorScreenState extends State<MirrorScreen>
     setState(() {
       _cameraState = nextState;
     });
+
+    final selectedCameraId = nextState.selectedCameraId;
+    if (nextState.status == MirrorCameraStatus.ready &&
+        selectedCameraId != null) {
+      await widget.settingsStore.saveLastCameraId(selectedCameraId);
+    }
   }
 
   @override
@@ -104,8 +123,13 @@ class _MirrorScreenState extends State<MirrorScreen>
         return Stack(
           fit: StackFit.expand,
           children: [
-            MirroredCameraPreview(controller: controller),
-            if (_cameraState.cameras.length > 1)
+            GestureDetector(
+              key: const ValueKey('mirror-video-surface'),
+              behavior: HitTestBehavior.opaque,
+              onTap: _toggleControls,
+              child: MirroredCameraPreview(controller: controller),
+            ),
+            if (_controlsVisible && _cameraState.cameras.length > 1)
               _buildCameraSelector(_cameraState),
           ],
         );
@@ -120,6 +144,12 @@ class _MirrorScreenState extends State<MirrorScreen>
       case MirrorCameraStatus.failed:
         return _buildFailure();
     }
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _controlsVisible = !_controlsVisible;
+    });
   }
 
   Widget _buildFailure() {
