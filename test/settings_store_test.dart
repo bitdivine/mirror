@@ -22,22 +22,38 @@ void main() {
     expect(await File('${directory.path}/settings.json').exists(), isTrue);
   });
 
-  test('file settings store saves the latest appearance analysis', () async {
+  test('file settings store saves an appearance capture directory', () async {
     final directory = await Directory.systemTemp.createTemp('mirror-settings-');
     addTearDown(() => directory.delete(recursive: true));
+    final sourceScreenshot = File('${directory.path}/source.jpg');
+    await sourceScreenshot.writeAsString('image-bytes');
 
-    final settingsStore = FileSettingsStore(configDirectory: () async {
-      return directory;
-    });
+    final settingsStore = FileSettingsStore(
+      configDirectory: () async {
+        return directory;
+      },
+      clock: () => DateTime(2026, 5, 4, 10, 8, 9),
+    );
 
-    final file = await settingsStore.saveAppearanceAnalysisText(
+    final capture = await settingsStore.createAppearanceCapture(
+      sourceScreenshot,
+    );
+    final analysisFile = await settingsStore.saveAppearanceAnalysisText(
+      capture,
       'Likely occupation signals: CEO or senior manager.',
     );
 
-    expect(file.path, '${directory.path}/appearance-analysis.txt');
+    final captureDirectory = '${directory.path}/appearance/20260504100809';
+    expect(capture.directory.path, captureDirectory);
+    expect(capture.screenshotFile.path, '$captureDirectory/screenshot.jpg');
+    expect(await capture.screenshotFile.readAsString(), 'image-bytes');
+    expect(analysisFile.path, '$captureDirectory/analysis.txt');
     expect(
-      await file.readAsString(),
+      await analysisFile.readAsString(),
       'Likely occupation signals: CEO or senior manager.\n',
     );
+
+    final latest = Link('${directory.path}/appearance/latest');
+    expect(await latest.target(), captureDirectory);
   });
 }

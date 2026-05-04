@@ -175,8 +175,11 @@ class _MirrorScreenState extends State<MirrorScreen>
 
     try {
       final still = await controller.takeStill();
-      final analysis =
-          await widget.appearanceAnalysisService.analyzeStill(still.file);
+      final capture =
+          await widget.settingsStore.createAppearanceCapture(still.file);
+      final analysis = await widget.appearanceAnalysisService.analyzeStill(
+        capture.screenshotFile,
+      );
       if (!mounted) {
         return;
       }
@@ -184,14 +187,15 @@ class _MirrorScreenState extends State<MirrorScreen>
         _appearanceAnalysis = analysis;
       });
       try {
-        final savedFile = await widget.settingsStore.saveAppearanceAnalysisText(
+        await widget.settingsStore.saveAppearanceAnalysisText(
+          capture,
           analysis.toDisplayText(),
         );
         if (!mounted) {
           return;
         }
         setState(() {
-          _analysisSavedPath = savedFile.path;
+          _analysisSavedPath = capture.directory.path;
         });
       } catch (error) {
         if (!mounted) {

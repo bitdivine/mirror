@@ -254,7 +254,11 @@ void main() {
     await tester.pump();
 
     expect(controller.takeStillCalls, 1);
-    expect(appearanceAnalysisService.imageFiles.single.path, 'still.jpg');
+    expect(settingsStore.capturedScreenshots.single.path, 'still.jpg');
+    expect(
+      appearanceAnalysisService.imageFiles.single.path,
+      '/tmp/mirror-test/appearance/20260504100809/screenshot.jpg',
+    );
     expect(
       (tester.widget(find.byKey(const ValueKey('appearance-analysis-result')))
               as SelectableText)
@@ -262,6 +266,10 @@ void main() {
       contains('Likely occupation signals: Likely CEO'),
     );
     expect(settingsStore.savedAppearanceAnalyses.single, contains('CEO'));
+    expect(
+      settingsStore.savedCaptureDirectories.single.path,
+      '/tmp/mirror-test/appearance/20260504100809',
+    );
     expect(find.byKey(const ValueKey('appearance-analysis-result')), findsOne);
     expect(
       find.byKey(const ValueKey('copy-appearance-analysis-button')),
@@ -340,6 +348,8 @@ class FakeSettingsStore implements SettingsStore {
   String? cameraId;
   final List<String> savedCameraIds = [];
   final List<String> savedAppearanceAnalyses = [];
+  final List<File> capturedScreenshots = [];
+  final List<Directory> savedCaptureDirectories = [];
 
   @override
   Future<String?> loadLastCameraId() async => cameraId;
@@ -351,9 +361,27 @@ class FakeSettingsStore implements SettingsStore {
   }
 
   @override
-  Future<File> saveAppearanceAnalysisText(String analysisText) async {
+  Future<AppearanceCapture> createAppearanceCapture(File screenshotFile) async {
+    capturedScreenshots.add(screenshotFile);
+    return AppearanceCapture(
+      directory: Directory('/tmp/mirror-test/appearance/20260504100809'),
+      screenshotFile: File(
+        '/tmp/mirror-test/appearance/20260504100809/screenshot.jpg',
+      ),
+      analysisFile: File(
+        '/tmp/mirror-test/appearance/20260504100809/analysis.txt',
+      ),
+    );
+  }
+
+  @override
+  Future<File> saveAppearanceAnalysisText(
+    AppearanceCapture capture,
+    String analysisText,
+  ) async {
+    savedCaptureDirectories.add(capture.directory);
     savedAppearanceAnalyses.add(analysisText);
-    return File('/tmp/mirror-test/appearance-analysis.txt');
+    return capture.analysisFile;
   }
 }
 
