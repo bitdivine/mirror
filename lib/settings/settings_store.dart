@@ -7,6 +7,8 @@ abstract class SettingsStore {
   Future<String?> loadLastCameraId();
 
   Future<void> saveLastCameraId(String cameraId);
+
+  Future<File> saveAppearanceAnalysisText(String analysisText);
 }
 
 class FileSettingsStore implements SettingsStore {
@@ -15,6 +17,7 @@ class FileSettingsStore implements SettingsStore {
   }) : _configDirectory = configDirectory ?? defaultConfigDirectory;
 
   static const _settingsFileName = 'settings.json';
+  static const _appearanceAnalysisFileName = 'appearance-analysis.txt';
   static const _lastCameraIdKey = 'lastCameraId';
 
   final Future<Directory> Function() _configDirectory;
@@ -45,10 +48,23 @@ class FileSettingsStore implements SettingsStore {
     await file.writeAsString('${jsonEncode(settings)}\n');
   }
 
+  @override
+  Future<File> saveAppearanceAnalysisText(String analysisText) async {
+    final directory = await _ensureConfigDirectory();
+    final file = File(_joinPath(directory.path, _appearanceAnalysisFileName));
+    await file.writeAsString('$analysisText\n');
+    return file;
+  }
+
   Future<File> _settingsFile() async {
+    final directory = await _ensureConfigDirectory();
+    return File(_joinPath(directory.path, _settingsFileName));
+  }
+
+  Future<Directory> _ensureConfigDirectory() async {
     final directory = await _configDirectory();
     await directory.create(recursive: true);
-    return File(_joinPath(directory.path, _settingsFileName));
+    return directory;
   }
 
   static Future<Directory> defaultConfigDirectory() async {

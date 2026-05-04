@@ -43,6 +43,23 @@ class AppearanceAnalysis {
   final List<String> impressionLabels;
   final String uncertaintyNotes;
 
+  String toDisplayText() {
+    final labels = impressionLabels.join(', ');
+    return [
+      overallDescription,
+      '',
+      'Appearance: $visibleAppearance',
+      'Tidiness: $groomingAndTidiness',
+      'Clothing and accessories: $clothingAndAccessories',
+      'Style: $styleAndPresentation',
+      'Demeanor: $demeanorAndVibe',
+      'Likely occupation signals: $likelyOccupationSignals',
+      'Likely seniority signals: $likelySenioritySignals',
+      if (labels.isNotEmpty) 'Impression labels: $labels',
+      'Uncertainty: $uncertaintyNotes',
+    ].join('\n');
+  }
+
   static String _requiredString(Map<String, Object?> json, String key) {
     final value = json[key];
     if (value is String && value.isNotEmpty) {

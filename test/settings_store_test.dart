@@ -21,4 +21,23 @@ void main() {
     expect(await reloadedSettingsStore.loadLastCameraId(), 'camera-1');
     expect(await File('${directory.path}/settings.json').exists(), isTrue);
   });
+
+  test('file settings store saves the latest appearance analysis', () async {
+    final directory = await Directory.systemTemp.createTemp('mirror-settings-');
+    addTearDown(() => directory.delete(recursive: true));
+
+    final settingsStore = FileSettingsStore(configDirectory: () async {
+      return directory;
+    });
+
+    final file = await settingsStore.saveAppearanceAnalysisText(
+      'Likely occupation signals: CEO or senior manager.',
+    );
+
+    expect(file.path, '${directory.path}/appearance-analysis.txt');
+    expect(
+      await file.readAsString(),
+      'Likely occupation signals: CEO or senior manager.\n',
+    );
+  });
 }

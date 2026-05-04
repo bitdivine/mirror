@@ -229,6 +229,7 @@ void main() {
       (tester) async {
     final controller = FakeMirrorCameraController(stillPath: 'still.jpg');
     final appearanceAnalysisService = FakeAppearanceAnalysisService();
+    final settingsStore = FakeSettingsStore();
 
     await tester.pumpWidget(
       MirrorApp(
@@ -241,7 +242,7 @@ void main() {
         ),
         diagnostics: const Diagnostics(appVersion: 'test'),
         appearanceAnalysisService: appearanceAnalysisService,
-        settingsStore: FakeSettingsStore(),
+        settingsStore: settingsStore,
       ),
     );
     await tester.pump();
@@ -254,7 +255,22 @@ void main() {
 
     expect(controller.takeStillCalls, 1);
     expect(appearanceAnalysisService.imageFiles.single.path, 'still.jpg');
+    expect(
+      (tester.widget(find.byKey(const ValueKey('appearance-analysis-result')))
+              as SelectableText)
+          .data,
+      contains('Likely occupation signals: Likely CEO'),
+    );
+    expect(settingsStore.savedAppearanceAnalyses.single, contains('CEO'));
     expect(find.byKey(const ValueKey('appearance-analysis-result')), findsOne);
+    expect(
+      find.byKey(const ValueKey('copy-appearance-analysis-button')),
+      findsOne,
+    );
+    expect(
+      find.byKey(const ValueKey('appearance-analysis-saved-path')),
+      findsOne,
+    );
     expect(find.textContaining('CEO'), findsWidgets);
     expect(find.textContaining('senior'), findsWidgets);
   });
@@ -323,6 +339,7 @@ class FakeSettingsStore implements SettingsStore {
 
   String? cameraId;
   final List<String> savedCameraIds = [];
+  final List<String> savedAppearanceAnalyses = [];
 
   @override
   Future<String?> loadLastCameraId() async => cameraId;
@@ -331,6 +348,12 @@ class FakeSettingsStore implements SettingsStore {
   Future<void> saveLastCameraId(String cameraId) async {
     this.cameraId = cameraId;
     savedCameraIds.add(cameraId);
+  }
+
+  @override
+  Future<File> saveAppearanceAnalysisText(String analysisText) async {
+    savedAppearanceAnalyses.add(analysisText);
+    return File('/tmp/mirror-test/appearance-analysis.txt');
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../ai/appearance_analysis.dart';
 import '../camera/camera_service.dart';
@@ -32,6 +33,7 @@ class _MirrorScreenState extends State<MirrorScreen>
   bool _analysisInProgress = false;
   AppearanceAnalysis? _appearanceAnalysis;
   String? _analysisError;
+  String? _analysisSavedPath;
 
   @override
   void initState() {
@@ -168,6 +170,7 @@ class _MirrorScreenState extends State<MirrorScreen>
     setState(() {
       _analysisInProgress = true;
       _analysisError = null;
+      _analysisSavedPath = null;
     });
 
     try {
@@ -180,6 +183,24 @@ class _MirrorScreenState extends State<MirrorScreen>
       setState(() {
         _appearanceAnalysis = analysis;
       });
+      try {
+        final savedFile = await widget.settingsStore.saveAppearanceAnalysisText(
+          analysis.toDisplayText(),
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _analysisSavedPath = savedFile.path;
+        });
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _analysisError = 'Analysis was shown but could not be saved: $error';
+        });
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -293,6 +314,16 @@ class _MirrorScreenState extends State<MirrorScreen>
                     if (_appearanceAnalysis != null) ...[
                       const SizedBox(height: 12),
                       _buildAnalysisSummary(_appearanceAnalysis!),
+                      const SizedBox(height: 12),
+                      _buildCopyAnalysisButton(_appearanceAnalysis!),
+                    ],
+                    if (_analysisSavedPath != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Saved to $_analysisSavedPath',
+                        key: const ValueKey('appearance-analysis-saved-path'),
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ],
                   ],
                 ),
@@ -305,37 +336,30 @@ class _MirrorScreenState extends State<MirrorScreen>
   }
 
   Widget _buildAnalysisSummary(AppearanceAnalysis analysis) {
-    final labels = analysis.impressionLabels.join(', ');
     return DefaultTextStyle(
       style: const TextStyle(color: Colors.white),
-      child: Column(
+      child: SelectableText(
         key: const ValueKey('appearance-analysis-result'),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            analysis.overallDescription,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text('Appearance: ${analysis.visibleAppearance}'),
-          const SizedBox(height: 6),
-          Text('Tidiness: ${analysis.groomingAndTidiness}'),
-          const SizedBox(height: 6),
-          Text('Style: ${analysis.styleAndPresentation}'),
-          const SizedBox(height: 6),
-          Text('Likely occupation signals: '
-              '${analysis.likelyOccupationSignals}'),
-          const SizedBox(height: 6),
-          Text('Likely seniority signals: '
-              '${analysis.likelySenioritySignals}'),
-          if (labels.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text('Impression labels: $labels'),
-          ],
-          const SizedBox(height: 6),
-          Text('Uncertainty: ${analysis.uncertaintyNotes}'),
-        ],
+        analysis.toDisplayText(),
       ),
+    );
+  }
+
+  Widget _buildCopyAnalysisButton(AppearanceAnalysis analysis) {
+    return OutlinedButton(
+      key: const ValueKey('copy-appearance-analysis-button'),
+      onPressed: () async {
+        await Clipboard.setData(
+          ClipboardData(text: analysis.toDisplayText()),
+        );
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Analysis copied.')),
+        );
+      },
+      child: const Text('Copy analysis'),
     );
   }
 }
