@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mirror/ai/appearance_analysis.dart';
 import 'package:mirror/app.dart';
 import 'package:mirror/camera/camera_service.dart';
 import 'package:mirror/diagnostics.dart';
@@ -12,7 +15,7 @@ void main() {
 
   testWidgets('renders mirrored preview when camera is ready', (tester) async {
     final cameraService = FakeCameraService(
-      const MirrorCameraState.ready(
+      MirrorCameraState.ready(
         FakeMirrorCameraController(),
         selectedCameraId: 'front',
         cameras: [frontCamera],
@@ -34,7 +37,7 @@ void main() {
 
   testWidgets('starts remembered camera when one is stored', (tester) async {
     final cameraService = FakeCameraService(
-      const MirrorCameraState.ready(
+      MirrorCameraState.ready(
         FakeMirrorCameraController(),
         selectedCameraId: 'front',
         cameras: [frontCamera, backCamera],
@@ -59,7 +62,7 @@ void main() {
     await tester.pumpWidget(
       MirrorApp(
         cameraService: FakeCameraService(
-          const MirrorCameraState.ready(
+          MirrorCameraState.ready(
             FakeMirrorCameraController(),
             selectedCameraId: 'front',
             cameras: [frontCamera],
@@ -135,7 +138,7 @@ void main() {
 
   testWidgets('hides camera selector until video is tapped', (tester) async {
     final cameraService = FakeCameraService(
-      const MirrorCameraState.ready(
+      MirrorCameraState.ready(
         FakeMirrorCameraController(),
         selectedCameraId: 'front',
         cameras: [frontCamera, backCamera],
@@ -163,7 +166,7 @@ void main() {
   testWidgets('tapping video toggles camera selector visibility',
       (tester) async {
     final cameraService = FakeCameraService(
-      const MirrorCameraState.ready(
+      MirrorCameraState.ready(
         FakeMirrorCameraController(),
         selectedCameraId: 'front',
         cameras: [frontCamera, backCamera],
@@ -191,7 +194,7 @@ void main() {
   testWidgets('changing selected camera restarts selected camera',
       (tester) async {
     final cameraService = FakeCameraService(
-      const MirrorCameraState.ready(
+      MirrorCameraState.ready(
         FakeMirrorCameraController(),
         selectedCameraId: 'front',
         cameras: [frontCamera, backCamera],
@@ -222,9 +225,67 @@ void main() {
     expect(settingsStore.savedCameraIds.last, 'back');
   });
 
+  testWidgets('analyzes a captured still and shows appearance detail',
+      (tester) async {
+    final controller = FakeMirrorCameraController(stillPath: 'still.jpg');
+    final appearanceAnalysisService = FakeAppearanceAnalysisService();
+    final settingsStore = FakeSettingsStore();
+
+    await tester.pumpWidget(
+      MirrorApp(
+        cameraService: FakeCameraService(
+          MirrorCameraState.ready(
+            controller,
+            selectedCameraId: 'front',
+            cameras: const [frontCamera],
+          ),
+        ),
+        diagnostics: const Diagnostics(appVersion: 'test'),
+        appearanceAnalysisService: appearanceAnalysisService,
+        settingsStore: settingsStore,
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('mirror-video-surface')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('analyze-appearance-button')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(controller.takeStillCalls, 1);
+    expect(settingsStore.capturedScreenshots.single.path, 'still.jpg');
+    expect(
+      appearanceAnalysisService.imageFiles.single.path,
+      '/tmp/mirror-test/appearance/20260504100809/screenshot.jpg',
+    );
+    expect(
+      (tester.widget(find.byKey(const ValueKey('appearance-analysis-result')))
+              as SelectableText)
+          .data,
+      contains('Likely occupation signals: Likely CEO'),
+    );
+    expect(settingsStore.savedAppearanceAnalyses.single, contains('CEO'));
+    expect(
+      settingsStore.savedCaptureDirectories.single.path,
+      '/tmp/mirror-test/appearance/20260504100809',
+    );
+    expect(find.byKey(const ValueKey('appearance-analysis-result')), findsOne);
+    expect(
+      find.byKey(const ValueKey('copy-appearance-analysis-button')),
+      findsOne,
+    );
+    expect(
+      find.byKey(const ValueKey('appearance-analysis-saved-path')),
+      findsOne,
+    );
+    expect(find.textContaining('CEO'), findsWidgets);
+    expect(find.textContaining('senior'), findsWidgets);
+  });
+
   testWidgets('mirrored preview applies horizontal transform', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: MirroredCameraPreview(
           controller: FakeMirrorCameraController(),
         ),
@@ -237,7 +298,7 @@ void main() {
 
   testWidgets('mirrored platform preview is not flipped again', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: MirroredCameraPreview(
           controller: FakeMirrorCameraController(isPreviewMirrored: true),
         ),
@@ -286,6 +347,9 @@ class FakeSettingsStore implements SettingsStore {
 
   String? cameraId;
   final List<String> savedCameraIds = [];
+  final List<String> savedAppearanceAnalyses = [];
+  final List<File> capturedScreenshots = [];
+  final List<Directory> savedCaptureDirectories = [];
 
   @override
   Future<String?> loadLastCameraId() async => cameraId;
@@ -295,15 +359,42 @@ class FakeSettingsStore implements SettingsStore {
     this.cameraId = cameraId;
     savedCameraIds.add(cameraId);
   }
+
+  @override
+  Future<AppearanceCapture> createAppearanceCapture(File screenshotFile) async {
+    capturedScreenshots.add(screenshotFile);
+    return AppearanceCapture(
+      directory: Directory('/tmp/mirror-test/appearance/20260504100809'),
+      screenshotFile: File(
+        '/tmp/mirror-test/appearance/20260504100809/screenshot.jpg',
+      ),
+      analysisFile: File(
+        '/tmp/mirror-test/appearance/20260504100809/analysis.txt',
+      ),
+    );
+  }
+
+  @override
+  Future<File> saveAppearanceAnalysisText(
+    AppearanceCapture capture,
+    String analysisText,
+  ) async {
+    savedCaptureDirectories.add(capture.directory);
+    savedAppearanceAnalyses.add(analysisText);
+    return capture.analysisFile;
+  }
 }
 
 class FakeMirrorCameraController implements MirrorCameraController {
-  const FakeMirrorCameraController({
+  FakeMirrorCameraController({
     this.ready = true,
     this.isPreviewMirrored = false,
+    this.stillPath = 'test-still.jpg',
   });
 
   final bool ready;
+  final String stillPath;
+  int takeStillCalls = 0;
 
   @override
   bool get isReady => ready;
@@ -318,5 +409,32 @@ class FakeMirrorCameraController implements MirrorCameraController {
   Widget buildPreview() => const Text('camera-preview');
 
   @override
+  Future<MirrorCameraStill> takeStill() async {
+    takeStillCalls += 1;
+    return MirrorCameraStill(path: stillPath);
+  }
+
+  @override
   Future<void> dispose() async {}
+}
+
+class FakeAppearanceAnalysisService implements AppearanceAnalysisService {
+  final List<File> imageFiles = [];
+
+  @override
+  Future<AppearanceAnalysis> analyzeStill(File imageFile) async {
+    imageFiles.add(imageFile);
+    return const AppearanceAnalysis(
+      overallDescription: 'Polished, tidy, and executive in presentation.',
+      visibleAppearance: 'The person appears composed and deliberate.',
+      groomingAndTidiness: 'The presentation looks tidy.',
+      clothingAndAccessories: 'The outfit reads as formal.',
+      styleAndPresentation: 'The style suggests a CEO or senior manager.',
+      demeanorAndVibe: 'The still gives a calm, confident impression.',
+      likelyOccupationSignals: 'Likely CEO, founder, or senior operator.',
+      likelySenioritySignals: 'Signals appear senior rather than junior.',
+      impressionLabels: ['tidy', 'executive', 'senior'],
+      uncertaintyNotes: 'This is an appearance-based impression only.',
+    );
+  }
 }

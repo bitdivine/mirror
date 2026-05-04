@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../ai/appearance_analysis.dart';
 import '../camera/camera_service.dart';
 import '../diagnostics.dart';
 import '../settings/settings_store.dart';
@@ -9,12 +11,14 @@ class MirrorScreen extends StatefulWidget {
   const MirrorScreen({
     required this.cameraService,
     required this.diagnostics,
+    required this.appearanceAnalysisService,
     required this.settingsStore,
     super.key,
   });
 
   final CameraService cameraService;
   final Diagnostics diagnostics;
+  final AppearanceAnalysisService appearanceAnalysisService;
   final SettingsStore settingsStore;
 
   @override
@@ -26,6 +30,10 @@ class _MirrorScreenState extends State<MirrorScreen>
   MirrorCameraState _cameraState = const MirrorCameraState.starting();
   Future<void>? _cameraStart;
   bool _controlsVisible = false;
+  bool _analysisInProgress = false;
+  AppearanceAnalysis? _appearanceAnalysis;
+  String? _analysisError;
+  String? _analysisSavedPath;
 
   @override
   void initState() {
@@ -131,6 +139,7 @@ class _MirrorScreenState extends State<MirrorScreen>
             ),
             if (_controlsVisible && _cameraState.cameras.length > 1)
               _buildCameraSelector(_cameraState),
+            if (_controlsVisible) _buildAnalysisControls(),
           ],
         );
       case MirrorCameraStatus.permissionDenied:
@@ -150,6 +159,67 @@ class _MirrorScreenState extends State<MirrorScreen>
     setState(() {
       _controlsVisible = !_controlsVisible;
     });
+  }
+
+  Future<void> _analyzeAppearance() async {
+    final controller = _cameraState.controller;
+    if (controller == null || _analysisInProgress) {
+      return;
+    }
+
+    setState(() {
+      _analysisInProgress = true;
+      _analysisError = null;
+      _analysisSavedPath = null;
+    });
+
+    try {
+      final still = await controller.takeStill();
+      final capture =
+          await widget.settingsStore.createAppearanceCapture(still.file);
+      final analysis = await widget.appearanceAnalysisService.analyzeStill(
+        capture.screenshotFile,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _appearanceAnalysis = analysis;
+      });
+      try {
+        await widget.settingsStore.saveAppearanceAnalysisText(
+          capture,
+          analysis.toDisplayText(),
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _analysisSavedPath = capture.directory.path;
+        });
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _analysisError = 'Analysis was shown but could not be saved: $error';
+        });
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _analysisError = error.toString();
+      });
+    } finally {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _analysisInProgress = false;
+      });
+    }
   }
 
   Widget _buildFailure() {
@@ -206,6 +276,94 @@ class _MirrorScreenState extends State<MirrorScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildAnalysisControls() {
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ElevatedButton(
+                      key: const ValueKey('analyze-appearance-button'),
+                      onPressed:
+                          _analysisInProgress ? null : _analyzeAppearance,
+                      child: Text(
+                        _analysisInProgress
+                            ? 'Analyzing appearance...'
+                            : 'Analyze appearance',
+                      ),
+                    ),
+                    if (_analysisError != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _analysisError!,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ],
+                    if (_appearanceAnalysis != null) ...[
+                      const SizedBox(height: 12),
+                      _buildAnalysisSummary(_appearanceAnalysis!),
+                      const SizedBox(height: 12),
+                      _buildCopyAnalysisButton(_appearanceAnalysis!),
+                    ],
+                    if (_analysisSavedPath != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Saved to $_analysisSavedPath',
+                        key: const ValueKey('appearance-analysis-saved-path'),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnalysisSummary(AppearanceAnalysis analysis) {
+    return DefaultTextStyle(
+      style: const TextStyle(color: Colors.white),
+      child: SelectableText(
+        key: const ValueKey('appearance-analysis-result'),
+        analysis.toDisplayText(),
+      ),
+    );
+  }
+
+  Widget _buildCopyAnalysisButton(AppearanceAnalysis analysis) {
+    return OutlinedButton(
+      key: const ValueKey('copy-appearance-analysis-button'),
+      onPressed: () async {
+        await Clipboard.setData(
+          ClipboardData(text: analysis.toDisplayText()),
+        );
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Analysis copied.')),
+        );
+      },
+      child: const Text('Copy analysis'),
     );
   }
 }

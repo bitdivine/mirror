@@ -6,6 +6,7 @@ build/
 coverage/
 dist/
 log.txt
+.env
 
 android/
 ios/

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -21,7 +23,17 @@ abstract class MirrorCameraController {
 
   Widget buildPreview();
 
+  Future<MirrorCameraStill> takeStill();
+
   Future<void> dispose();
+}
+
+class MirrorCameraStill {
+  const MirrorCameraStill({required this.path});
+
+  final String path;
+
+  File get file => File(path);
 }
 
 class MirrorCameraOption {
@@ -269,6 +281,12 @@ class CameraControllerAdapter implements MirrorCameraController {
 
   @override
   Widget buildPreview() => CameraPreview(controller);
+
+  @override
+  Future<MirrorCameraStill> takeStill() async {
+    final picture = await controller.takePicture();
+    return MirrorCameraStill(path: picture.path);
+  }
 
   @override
   Future<void> dispose() => controller.dispose();
