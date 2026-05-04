@@ -51,6 +51,7 @@ IGNORED
   "demeanorAndVibe": "The expression appears calm.",
   "likelyOccupationSignals": "Could plausibly read as a CEO or senior manager.",
   "likelySenioritySignals": "Signals lean senior rather than junior.",
+  "ctoInterviewRecommendations": "For a CTO interview, keep the polished baseline and add a slightly sharper jacket or structured layer.",
   "impressionLabels": ["tidy", "executive"],
   "uncertaintyNotes": "This is an appearance-based impression only."
 }
@@ -71,6 +72,10 @@ IGNORED
     expect(
       analysis.likelyOccupationSignals,
       'Could plausibly read as a CEO or senior manager.',
+    );
+    expect(
+      analysis.ctoInterviewRecommendations,
+      contains('CTO interview'),
     );
     expect(analysis.impressionLabels, ['tidy', 'executive']);
   });
