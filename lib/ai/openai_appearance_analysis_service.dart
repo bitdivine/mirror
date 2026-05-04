@@ -71,13 +71,31 @@ class DotEnvOpenAiConfigLoader implements OpenAiConfigLoader {
       }
 
       final key = normalized.substring(0, separator).trim();
-      final rawValue = normalized.substring(separator + 1).trim();
+      final rawValue = _stripInlineComment(
+        normalized.substring(separator + 1).trim(),
+      );
       if (key.isEmpty) {
         continue;
       }
       values[key] = _stripOptionalQuotes(rawValue);
     }
     return values;
+  }
+
+  static String _stripInlineComment(String value) {
+    var inSingleQuote = false;
+    var inDoubleQuote = false;
+    for (var index = 0; index < value.length; index += 1) {
+      final character = value[index];
+      if (character == "'" && !inDoubleQuote) {
+        inSingleQuote = !inSingleQuote;
+      } else if (character == '"' && !inSingleQuote) {
+        inDoubleQuote = !inDoubleQuote;
+      } else if (character == '#' && !inSingleQuote && !inDoubleQuote) {
+        return value.substring(0, index).trimRight();
+      }
+    }
+    return value;
   }
 
   static String _stripOptionalQuotes(String value) {
@@ -106,6 +124,10 @@ class OpenAiAppearanceAnalysisService implements AppearanceAnalysisService {
   final OpenAiConfigLoader _configLoader;
   final OpenAiJsonPost _postJson;
   final Uri _endpoint;
+
+  static String formatOpenAiErrorForTest(int statusCode, Object? decoded) {
+    return _formatOpenAiError(statusCode, decoded);
+  }
 
   @override
   Future<AppearanceAnalysis> analyzeStill(File imageFile) async {
@@ -219,7 +241,7 @@ class OpenAiAppearanceAnalysisService implements AppearanceAnalysisService {
       final decoded = jsonDecode(responseBody);
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw AppearanceAnalysisException(
-          'OpenAI request failed with HTTP ${response.statusCode}.',
+          _formatOpenAiError(response.statusCode, decoded),
         );
       }
       if (decoded is Map<String, Object?>) {
@@ -233,6 +255,33 @@ class OpenAiAppearanceAnalysisService implements AppearanceAnalysisService {
     } finally {
       client.close(force: true);
     }
+  }
+
+  static String _formatOpenAiError(int statusCode, Object? decoded) {
+    final detail = _openAiErrorMessage(decoded);
+    if (detail == null || detail.isEmpty) {
+      return 'OpenAI request failed with HTTP $statusCode.';
+    }
+    return 'OpenAI request failed with HTTP $statusCode: '
+        '${_redactSecretFragments(detail)}';
+  }
+
+  static String? _openAiErrorMessage(Object? decoded) {
+    if (decoded is! Map<String, Object?>) {
+      return null;
+    }
+    final error = decoded['error'];
+    if (error is Map<String, Object?>) {
+      final message = error['message'];
+      if (message is String) {
+        return message;
+      }
+    }
+    return null;
+  }
+
+  static String _redactSecretFragments(String message) {
+    return message.replaceAll(RegExp(r'sk-[A-Za-z0-9_-]+'), 'sk-...');
   }
 }
 

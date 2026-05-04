@@ -9,11 +9,15 @@ void main() {
 # Comment
 export OPENAI_API_KEY="test-key"
 OPENAI_MODEL='test-model'
+COMMENTED_VALUE=abc # local note
+QUOTED_COMMENT="abc # still value"
 IGNORED
 ''');
 
     expect(values['OPENAI_API_KEY'], 'test-key');
     expect(values['OPENAI_MODEL'], 'test-model');
+    expect(values['COMMENTED_VALUE'], 'abc');
+    expect(values['QUOTED_COMMENT'], 'abc # still value');
   });
 
   test('sends image to OpenAI and parses appearance analysis', () async {
@@ -69,6 +73,21 @@ IGNORED
       'Could plausibly read as a CEO or senior manager.',
     );
     expect(analysis.impressionLabels, ['tidy', 'executive']);
+  });
+
+  test('includes sanitized OpenAI error details', () {
+    expect(
+      OpenAiAppearanceAnalysisService.formatOpenAiErrorForTest(
+        401,
+        {
+          'error': {
+            'message': 'Incorrect API key provided: sk-secret123.',
+          },
+        },
+      ),
+      'OpenAI request failed with HTTP 401: '
+      'Incorrect API key provided: sk-....',
+    );
   });
 }
 
