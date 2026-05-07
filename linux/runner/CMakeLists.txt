@@ -19,6 +19,9 @@ apply_standard_settings(${BINARY_NAME})
 # Add preprocessor definitions for the application ID.
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
+if(NOT DEFINED MIRROR_VERSION AND DEFINED ENV{MIRROR_VERSION})
+  set(MIRROR_VERSION "$ENV{MIRROR_VERSION}")
+endif()
 if(DEFINED MIRROR_VERSION)
   add_definitions(-DMIRROR_VERSION="${MIRROR_VERSION}")
 endif()

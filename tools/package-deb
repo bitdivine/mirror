@@ -121,8 +121,9 @@ chmod +x "$work_dir/bin/clang++"
 
 export CC="${CC:-clang}"
 export CXX="${CXX:-$work_dir/bin/clang++}"
+export MIRROR_VERSION="$version"
 
-flutter build linux --release
+flutter build linux --release --dart-define="MIRROR_VERSION=$version"
 
 if [[ ! -x "${bundle_dir}/${package_name}" ]]; then
   echo "Flutter release bundle was not created at ${bundle_dir}." >&2
