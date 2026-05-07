@@ -44,8 +44,7 @@ void main() {
       expect(
         startAppCalls,
         1,
-        reason:
-            'A fullscreen failure MUST NOT prevent the app from starting '
+        reason: 'A fullscreen failure MUST NOT prevent the app from starting '
             '(DD-SRS-F-FBD.16).',
       );
     });
