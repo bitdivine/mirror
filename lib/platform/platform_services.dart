@@ -1,4 +1,5 @@
 import '../diagnostics.dart';
+import '../version.dart' as version;
 
 abstract class PlatformServices {
   void logStartupPhase(String phase);
@@ -8,7 +9,7 @@ abstract class PlatformServices {
 
 class DefaultPlatformServices implements PlatformServices {
   const DefaultPlatformServices({
-    this.diagnostics = const Diagnostics(appVersion: '0.1.0'),
+    this.diagnostics = const Diagnostics(appVersion: version.appVersion),
   });
 
   final Diagnostics diagnostics;

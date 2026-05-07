@@ -7,10 +7,11 @@ import 'camera/camera_service.dart';
 import 'diagnostics.dart';
 import 'platform/fullscreen_service.dart';
 import 'settings/settings_store.dart';
+import 'version.dart' as version;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const diagnostics = Diagnostics(appVersion: '0.1.0');
+  const diagnostics = Diagnostics(appVersion: version.appVersion);
   final fullscreenService = FullscreenService.forCurrentPlatform(
     diagnostics: diagnostics,
   );
