@@ -105,7 +105,7 @@ echo "Android SDK installed at $sdk"
 
 [tasks.fmt]
 description = "Check Dart formatting."
-run = "dart format --set-exit-if-changed $(find . -name '*.dart' -not -path './vendor/*' -not -path './build/*')"
+run = "dart format --set-exit-if-changed lib test"
 
 [tasks.test]
 description = "Run Flutter tests."
