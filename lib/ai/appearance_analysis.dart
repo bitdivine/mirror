@@ -10,6 +10,7 @@ class AppearanceAnalysis {
     required this.demeanorAndVibe,
     required this.likelyOccupationSignals,
     required this.likelySenioritySignals,
+    required this.ctoInterviewRecommendations,
     required this.impressionLabels,
     required this.uncertaintyNotes,
   });
@@ -27,6 +28,10 @@ class AppearanceAnalysis {
         'likelyOccupationSignals',
       ),
       likelySenioritySignals: _requiredString(json, 'likelySenioritySignals'),
+      ctoInterviewRecommendations: _requiredString(
+        json,
+        'ctoInterviewRecommendations',
+      ),
       impressionLabels: _requiredStringList(json, 'impressionLabels'),
       uncertaintyNotes: _requiredString(json, 'uncertaintyNotes'),
     );
@@ -40,6 +45,7 @@ class AppearanceAnalysis {
   final String demeanorAndVibe;
   final String likelyOccupationSignals;
   final String likelySenioritySignals;
+  final String ctoInterviewRecommendations;
   final List<String> impressionLabels;
   final String uncertaintyNotes;
 
@@ -55,6 +61,7 @@ class AppearanceAnalysis {
       'Demeanor: $demeanorAndVibe',
       'Likely occupation signals: $likelyOccupationSignals',
       'Likely seniority signals: $likelySenioritySignals',
+      'CTO interview recommendations: $ctoInterviewRecommendations',
       if (labels.isNotEmpty) 'Impression labels: $labels',
       'Uncertainty: $uncertaintyNotes',
     ].join('\n');

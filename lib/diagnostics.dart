@@ -33,6 +33,32 @@ class Diagnostics {
     );
   }
 
+  void logFullscreenApplied() {
+    _log(
+      'startup phase=fullscreen-applied appVersion=$appVersion '
+      'os=$operatingSystemName',
+      name: 'mirror.startup',
+    );
+  }
+
+  void logFullscreenFailed(Object error, StackTrace stackTrace) {
+    _log(
+      'startup phase=fullscreen-failed appVersion=$appVersion '
+      'os=$operatingSystemName',
+      name: 'mirror.startup',
+      error: error,
+      stackTrace: stackTrace,
+    );
+  }
+
+  void logFullscreenUnsupported() {
+    _log(
+      'startup phase=fullscreen-unsupported appVersion=$appVersion '
+      'os=$operatingSystemName',
+      name: 'mirror.startup',
+    );
+  }
+
   void logCameraError(String category, Object error, StackTrace stackTrace) {
     _log(
       'camera phase=error category=$category appVersion=$appVersion '

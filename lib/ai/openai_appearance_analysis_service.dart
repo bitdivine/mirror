@@ -295,6 +295,11 @@ say someone gives an executive, service, creative, technical, junior, senior,
 tidy, frumpy, elegant, stylish, creepy, or unsettling impression when visible
 cues support that impression.
 
+Also provide practical recommendations for someone who wants to present a
+suitable appearance while interviewing as a CTO. Make the recommendations
+specific to visible grooming, clothing, polish, formality, authority,
+approachability, and technical leadership signals.
+
 Do not identify the person. Do not claim to know protected traits, exact age,
 health, religion, ethnicity, nationality, sexuality, disability, or actual job.
 When evidence is weak, say so clearly.
@@ -305,7 +310,8 @@ Give a detailed appearance-focused description of the person in this still.
 Focus on tidiness, grooming, clothing, polish, style, elegance, frumpiness,
 creepiness or unsettling cues, confidence, apparent professionalism, likely
 occupation signals, and likely professional seniority signals. Return detailed
-but careful language.
+but careful language. Include recommendations for improving or maintaining a
+suitable appearance for interviewing as a CTO.
 ''';
 
 const _responseSchema = {
@@ -320,6 +326,7 @@ const _responseSchema = {
     'demeanorAndVibe',
     'likelyOccupationSignals',
     'likelySenioritySignals',
+    'ctoInterviewRecommendations',
     'impressionLabels',
     'uncertaintyNotes',
   ],
@@ -332,6 +339,7 @@ const _responseSchema = {
     'demeanorAndVibe': {'type': 'string'},
     'likelyOccupationSignals': {'type': 'string'},
     'likelySenioritySignals': {'type': 'string'},
+    'ctoInterviewRecommendations': {'type': 'string'},
     'impressionLabels': {
       'type': 'array',
       'items': {'type': 'string'},

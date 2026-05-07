@@ -265,7 +265,17 @@ void main() {
           .data,
       contains('Likely occupation signals: Likely CEO'),
     );
+    expect(
+      (tester.widget(find.byKey(const ValueKey('appearance-analysis-result')))
+              as SelectableText)
+          .data,
+      contains('CTO interview recommendations:'),
+    );
     expect(settingsStore.savedAppearanceAnalyses.single, contains('CEO'));
+    expect(
+      settingsStore.savedAppearanceAnalyses.single,
+      contains('CTO interview'),
+    );
     expect(
       settingsStore.savedCaptureDirectories.single.path,
       '/tmp/mirror-test/appearance/20260504100809',
@@ -433,6 +443,9 @@ class FakeAppearanceAnalysisService implements AppearanceAnalysisService {
       demeanorAndVibe: 'The still gives a calm, confident impression.',
       likelyOccupationSignals: 'Likely CEO, founder, or senior operator.',
       likelySenioritySignals: 'Signals appear senior rather than junior.',
+      ctoInterviewRecommendations:
+          'For a CTO interview, keep the executive polish and add a structured '
+          'layer that signals technical leadership.',
       impressionLabels: ['tidy', 'executive', 'senior'],
       uncertaintyNotes: 'This is an appearance-based impression only.',
     );

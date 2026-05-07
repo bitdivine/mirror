@@ -66,11 +66,20 @@ require_pkg_config_module gstreamer-video-1.0
 
 package_name="mirror"
 application_id="com.example.mirror"
-version="$(awk -F': ' '$1 == "version" { print $2; exit }' pubspec.yaml)"
-if [[ -z "$version" ]]; then
+base_version="$(awk -F': ' '$1 == "version" { print $2; exit }' pubspec.yaml)"
+if [[ -z "$base_version" ]]; then
   echo "Could not read package version from pubspec.yaml." >&2
   exit 1
 fi
+base_version="${base_version%%+*}"
+
+git_commit="$(git rev-parse --short HEAD)"
+if [[ -z "$git_commit" ]]; then
+  echo "Could not determine the current git commit." >&2
+  exit 1
+fi
+
+version="${base_version}+${git_commit}"
 
 architecture="$(dpkg --print-architecture)"
 output_dir="${PACKAGE_DEB_OUTPUT_DIR:-dist/deb}"
@@ -112,8 +121,9 @@ chmod +x "$work_dir/bin/clang++"
 
 export CC="${CC:-clang}"
 export CXX="${CXX:-$work_dir/bin/clang++}"
+export MIRROR_VERSION="$version"
 
-flutter build linux --release
+flutter build linux --release --dart-define="MIRROR_VERSION=$version"
 
 if [[ ! -x "${bundle_dir}/${package_name}" ]]; then
   echo "Flutter release bundle was not created at ${bundle_dir}." >&2
